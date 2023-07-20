@@ -1,6 +1,6 @@
-<<<<<<< HEAD
-# Realistic 3D modelling of tubular tissues
-=======
+
+ Realistic 3D modelling of tubular tissues
+
 ---
 title: "README"
 author: "Eloy Tomás Serrano Andrés"
