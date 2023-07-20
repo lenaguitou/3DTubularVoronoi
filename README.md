@@ -24,7 +24,7 @@ Then, be sure you have installed the R packages and libraries required.
 
 ## Execution ##
 
-The main folder is *Ncylinder*, within there is a tutorial web page called _Ncylinder_tutorial.html_ to explain how to use the R file _Ncylinder.Rmd_. When executing the R file, do not forget to modify the ```PATH_PROJECT``` at the beginning of the code.
+The main code is a R file to execute (do not forget to modify the ```PATH_PROJECT``` at the beginning of the code). There is also a html tutorial if needed. 
 
 In *Source* folder, there are the codes where the Metropolis and Voronoi tesselations are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
 
