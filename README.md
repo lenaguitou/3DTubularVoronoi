@@ -1,13 +1,11 @@
-**
+---
 Realistic 3D modelling of tubular tissues
-**
+---
 
----
-title: "README"
-author: "Eloy Tomás Serrano Andrés"
-last update: "07/2023"
-output: html_document
----
+Author: Eloy Tomás Serrano Andrés
+Last update: 07/2023
+
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
