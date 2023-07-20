@@ -13,10 +13,10 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
  
 We import the necessary libraries from our repository (stored in the file "N-cylinder/MetropolisAlgorithm.R").
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-PATH_PROJECT = "C:/Users/lenaa/Downloads/VoronoiMetropolis-main/VoronoiMetropolis-main/Ncylinder/"
+PATH_PROJECT = "∼/3DTubularVoronoi/"
 setwd(PATH_PROJECT)
 knitr::opts_knit$set(root.dir = PATH_PROJECT)
-PATH_MODEL = "C:/Users/lenaa/Downloads/VoronoiMetropolis-main/VoronoiMetropolis-main/Source/Ncylinder/source_MetropolisAlgorithm.R"
+PATH_MODEL = "∼/3DTubularVoronoi/Source/source_MetropolisAlgorithm.R"
 source(PATH_MODEL)
 ```
 
@@ -88,7 +88,7 @@ Nu squared contains the single value of the metric after performing all the iter
 Now let's analyze the results we have got. First we import our library that contains the necessary code and functions.
 
 ```{r,include=FALSE}
-PATH_ANALYSIS = "C:/Users/lenaa/Downloads/VoronoiMetropolis-main/VoronoiMetropolis-main/Source/Analysis/source_analysis.R"
+PATH_ANALYSIS = "∼/3DTubularVoronoi/Source/Analysis/source_analysis.R"
 source(PATH_ANALYSIS)
 ```
 
@@ -194,7 +194,7 @@ stopImplicitCluster()
 
 
 ```{r,include=FALSE}
-PATH_SIMANALYSIS = "C:/Users/lenaa/Downloads/VoronoiMetropolis-main/VoronoiMetropolis-main/Source/Analysis/source_simulation_analysis.R"
+PATH_SIMANALYSIS = "∼/3DTubularVoronoi/Source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
 ```
 
