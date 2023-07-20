@@ -11,7 +11,7 @@ Tested on R version 4.3.1. and RStudio version 2023.06.1+524.
 
 ### Windows ###
 
-Exept some packages you may have to install, the execution of the codes in Windows does not require any particular set up. 
+Exept some R packages you may have to install, the execution of the codes in Windows does not require any particular set up. 
 
 ### Linux ###
 
@@ -19,9 +19,14 @@ In Linux, you may face an issue with ``` gdal ```. This can be simply solved usi
 
 ``` sudo apt-get install gdal-bin proj-bin libgdal-dev libproj-dev ```
 
-Then, be sure you have installed the packages an libraries required to run the code. 
+Then, be sure you have installed the R packages and libraries required. 
   
 
 ## Execution ##
 
-Do not forget to change the path 
+The main folder is *Ncylinder*, within there is a tutorial web page called _Ncylinder_tutorial.html_ to explain how to use the R file _Ncylinder.Rmd_. When executing the R file, do not forget to modify the ```PATH_PROJECT``` at the beginning of the code.
+
+In *Source codes* folder, there are the codes where the Metropolis and Voronoi tesselations are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
+
+The second main folder if *Bending* but is still pending of improvements. 
+
