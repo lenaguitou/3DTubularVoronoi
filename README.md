@@ -26,7 +26,7 @@ Then, be sure you have installed the R packages and libraries required.
 
 The main code is a R file to execute (do not forget to modify the ```PATH_PROJECT``` at the beginning of the code). There is also a html tutorial if needed. 
 
-In *Source* folder, there are the codes where the Metropolis and Voronoi tesselations are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
+In *Source* folder, there are the codes where the cylinders and analysis processes are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
 
 The second main folder if *Bending* but is still pending of improvements. 
 
