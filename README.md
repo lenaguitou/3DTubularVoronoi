@@ -24,5 +24,5 @@ The main code is a R file to execute (do not forget to modify the ```PATH_PROJEC
 
 In *Source* folder, there are the codes where the cylinders and analysis processes are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
 
-The second main folder if *Bending* but is still pending of improvements. 
+The second main folder is *Bending* but is still pending of improvements. 
 
