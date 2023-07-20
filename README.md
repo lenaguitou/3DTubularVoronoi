@@ -16,6 +16,7 @@ Exept some packages you may have to install, the execution of the codes in Windo
 ### Linux ###
 
 In Linux, you may face an issue with ``` gdal ```. This can be simply solved by install it suing the following command: \
+
 ``` sudo apt-get install gdal-bin proj-bin libgdal-dev libproj-dev ```
   
 
