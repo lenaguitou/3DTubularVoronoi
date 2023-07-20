@@ -1,7 +1,5 @@
 <<<<<<< HEAD
-# VoronoiMetropolis
- Metropolis algorithm for Voronoi Tessellations
-ok
+# Realistic 3D modelling of tubular tissues
 =======
 ---
 title: "README"
