@@ -5,7 +5,7 @@ ok
 =======
 ---
 title: "README"
-author: "Eloy Serrano"
+author: "Eloy Tomás Serrano Andrés"
 last update: "07/2023"
 output: html_document
 ---
