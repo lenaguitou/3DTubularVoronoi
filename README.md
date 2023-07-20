@@ -1,5 +1,5 @@
 ---
-* Realistic 3D modelling of tubular tissues
+Realistic 3D modelling of tubular tissues
 ---
 
 Author: Eloy Tomás Serrano Andrés
