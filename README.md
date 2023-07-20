@@ -15,7 +15,7 @@ Exept some R packages you may have to install, the execution of the codes in Win
 
 ### Linux ###
 
-In Linux, you may face an issue with ``` gdal ```. This can be simply solved using the following command: \
+In Linux, you may face an issue with ``` gdal ```. This can be simply solved using the following command: 
 
 ``` sudo apt-get install gdal-bin proj-bin libgdal-dev libproj-dev ```
 
@@ -26,7 +26,7 @@ Then, be sure you have installed the R packages and libraries required.
 
 The main folder is *Ncylinder*, within there is a tutorial web page called _Ncylinder_tutorial.html_ to explain how to use the R file _Ncylinder.Rmd_. When executing the R file, do not forget to modify the ```PATH_PROJECT``` at the beginning of the code.
 
-In *Source codes* folder, there are the codes where the Metropolis and Voronoi tesselations are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
+In *Source* folder, there are the codes where the Metropolis and Voronoi tesselations are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
 
 The second main folder if *Bending* but is still pending of improvements. 
 
