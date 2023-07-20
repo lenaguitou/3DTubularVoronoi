@@ -5,8 +5,8 @@ ok
 =======
 ---
 title: "README"
-author: "Eloy"
-date: "1/2/2023"
+author: "Eloy Serrano"
+last update: "07/2023"
 output: html_document
 ---
 
