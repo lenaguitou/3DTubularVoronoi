@@ -1,12 +1,11 @@
----
-Realistic 3D modelling of tubular tissues
----
+
+# Realistic 3D modelling of tubular tissues #
 
 Author: Eloy Tomás Serrano Andrés \
 Last update: 07/2023
 
 
-# INSTALLATION #
+## Installation ##
 
 ### Windows ###
 
@@ -18,6 +17,6 @@ In Linux, you may face an issue with ``` gdal ```. This can be simply solved by 
 ``` sudo apt-get install gdal-bin proj-bin libgdal-dev libproj-dev ```
   
 
-# EXECUTION #
+## Execution ##
 
 Do not forget to change the path 
