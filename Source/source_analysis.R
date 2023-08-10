@@ -133,7 +133,7 @@ energy_analysis_nobend <- function(histpts, it=150, n=100, Lay=10){
   
     tesener2_long <- tesener2 %>%
     pivot_longer(cols = c(Tension_energy, Elastic_energy, Contractile_energy, Total_energy),
-                 names_to = "Energy_Type", values_to = "Energy_Value"
+                 names_to = "Energy_Type", values_to = "Energy_Value")
   
   p2 <- ggplot(tesener2_long, aes(x = Layer, y = Energy_Value, colour = Energy_Type)) +
     geom_line() +
