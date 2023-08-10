@@ -89,7 +89,7 @@ Nu squared contains the single value of the metric after performing all the iter
 Now let's analyze the results we have got. First we import our library that contains the necessary code and functions.
 
 ```{r,include=FALSE}
-PATH_ANALYSIS = "∼/3DTubularVoronoi/Source/Analysis/source_analysis.R"
+PATH_ANALYSIS = "∼/3DTubularVoronoi/Source/source_analysis.R"
 source(PATH_ANALYSIS)
 ```
 
