@@ -12,7 +12,7 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 # Running Metropolis algorithm
  
 We import the necessary libraries from our repository (stored in the file "N-cylinder/MetropolisAlgorithm.R"). Change path project to the folder where 
-the git project has been cloned.
+the git project has been cloned. Use getwd() if needed. 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 PATH_PROJECT = "∼/3DTubularVoronoi/"
 setwd(PATH_PROJECT)
