@@ -99,10 +99,10 @@ energy_analysis_nobend <- function(histpts, it=150, n=100, Lay=10){
     tenener <- sum(lamad*perims)/n
     gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1 )
     contener <- sum((gam/2)*(perims^2))/n
-    tesener[i,c(2,3,4,5)] <- c(elener/Lay,
-                               tenener/Lay,
-                               contener/Lay,
-                               (elener+tenener+contener)/(Lay*n))
+    tesener[i,c(2,3,4,5)] <- c(elener/(Lay/n),
+                               tenener/(Lay/n),
+                               contener/(Lay/n),
+                               (elener+tenener+contener)/(Lay/n))
     
     tesellast <- deldir(pointslast$x*(rad[[i]]/rad[[1]]),pointslast$y,rw=rec[[i]])
     tilestlast <- tile.list(tesellast)[(n+1):(2*n)]
@@ -114,56 +114,32 @@ energy_analysis_nobend <- function(histpts, it=150, n=100, Lay=10){
     tenenerl <- sum(lamad*perimsl)/n
     gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1 )
     contenerl <- sum((gam/2)*(perimsl^2))/n
-    tesener2[i,c(2,3,4,5)] <- c(elenerl/Lay,
-                                tenenerl/Lay,
-                                contenerl/Lay,
-                                (elenerl+tenenerl+contenerl)/(n*Lay))
+    tesener2[i,c(2,3,4,5)] <- c(elenerl/(Lay/n),
+                                tenenerl/(Lay/n),
+                                contenerl/(Lay/n),
+                                (elenerl+tenenerl+contenerl)/(Lay/n))
   }
   
-  p<-ggplot(tesener, aes(x = Layer))+
-    geom_line(aes(y = Total_energy, colour = "Total energy"))+
-    geom_line(aes(y=Tension_energy, colour = "Tension energy"))+
-    geom_line(aes(y = Elastic_energy,colour = "Adhesion energy"))+
-    geom_line(aes(y = Contractile_energy, colour = "Contractile energy"))+
-    # geom_line(aes(x = Layer, y = Bending_energy, colour = "Bending energy"))+
-    labs(title = "Energy Analysis before executing the algorithm",
+  tesener_long <- tesener %>%
+    pivot_longer(cols = c(Tension_energy, Elastic_energy, Contractile_energy, Total_energy),
+                 names_to = "Energy_Type", values_to = "Energy_Value")
+
+  p <- ggplot(tesener_long, aes(x = Layer, y = Energy_Value, colour = Energy_Type)) +
+    geom_line() +
+    labs(title = paste0("Energy Analysis after ", it, " iterations of the algorithm"),
          x = "Layer ratio (R/Ra)", y = "Average energy of the cell",
-         color = "Energy type") +
-    scale_colour_manual("",
-                        breaks = c("Tension energy",
-                                   "Adhesion energy",
-                                   "Contractile energy",
-                                   "Total energy"),
-                        # "Bending energy"),
-                        values = c("red",
-                                   "blue",
-                                   # "darkgreen",
-                                   "orange",
-                                   "purple"))
-  
+         color = "Energy type")
   show(p)
   
-  p2<-ggplot(tesener2, aes(x = Layer))+
-    geom_line(aes(y = Total_energy, colour = "Total energy"))+
-    geom_line(aes(y=Tension_energy, colour = "Tension energy"))+
-    geom_line(aes(y = Elastic_energy,colour = "Adhesion energy"))+
-    geom_line(aes(y = Contractile_energy, colour = "Contractile energy"))+
-    # geom_line(aes(x = Layer, y = Bending_energy, colour = "Bending energy"))+
-    labs(title = paste0("Energy Analysis after ",it, " iterations of the algorithm"),
-         x = "Layer ratio (R/Ra)", y = "Average energy of the cell",
-         color = "Energy type") +
-    scale_colour_manual("",
-                        breaks = c("Tension energy",
-                                   "Adhesion energy",
-                                   "Contractile energy",
-                                   "Total energy"),
-                        # "Bending energy"),
-                        values = c("red",
-                                   "blue",
-                                   # "darkgreen",
-                                   "orange",
-                                   "purple"))
+    tesener2_long <- tesener2 %>%
+    pivot_longer(cols = c(Tension_energy, Elastic_energy, Contractile_energy, Total_energy),
+                 names_to = "Energy_Type", values_to = "Energy_Value"
   
+  p2 <- ggplot(tesener2_long, aes(x = Layer, y = Energy_Value, colour = Energy_Type)) +
+    geom_line() +
+    labs(title = paste0("Energy Analysis after ", it, " iterations of the algorithm"),
+         x = "Layer ratio (R/Ra)", y = "Average energy of the cell",
+         color = "Energy type")
   show(p2)
   
   
