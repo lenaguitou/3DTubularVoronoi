@@ -11,7 +11,8 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
  
 # Running Metropolis algorithm
  
-We import the necessary libraries from our repository (stored in the file "N-cylinder/MetropolisAlgorithm.R").
+We import the necessary libraries from our repository (stored in the file "N-cylinder/MetropolisAlgorithm.R"). Change path project to the folder where 
+the git project has been cloned.
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 PATH_PROJECT = "∼/3DTubularVoronoi/"
 setwd(PATH_PROJECT)
@@ -24,16 +25,16 @@ Now we set the necessary parameters. If we forget to set the value of some param
 ```{r}
 params = list(
   seed = 42, # 
-  steps = 100, # simulation steps
+  steps = 1, # simulation steps
   n = 100, # number of cells
-  L=3, # numbers of layers
+  L=6, # numbers of layers
   RadiusA = 5/(2*pi), # apical radius
   Ratio = 2.5, # ratio between apical and basal radius 
   cyl_length = 20, # cylinder length
   gamma_ad = 0.15, #  contractility
   lambda_ad = 0.04, # adhesion 
-  # elastic K = 1 cause adimentional
-  beta = 100, #
+  # elastic K = 1 cause adimentionality
+  beta = 100, #constant involved in jumps because of perturbations
   s0=1 # 
   )
 ```
