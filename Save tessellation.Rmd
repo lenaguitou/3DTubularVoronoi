@@ -53,7 +53,7 @@ Now, we select the tessellation that we want to save
 library(dplyr) # to do the filtering operation in the dataframe
 dir.create(file.path(PATH_PROJECT,"saved_tessellations/"))
 pointsinit <- filter(result_alg[[1]], Frame ==1)
-pointsend <- filter(result_alg[[1]], Frame==5)
+pointsend <- filter(result_alg[[1]], Frame==steps)
 pts_info_init = save_tessellation_layers(pointsinit, filename = "saved_tessellations/example_1_of_saved_tessellation.csv")
 pts_info_end = save_tessellation_layers(pointsend, filename = "saved_tessellations/example_2_of_saved_tessellation.csv")
 ```
