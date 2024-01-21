@@ -208,6 +208,9 @@ metropolisad<-function(seed = 666, steps = 250, n = 100, L=5,
     energhist[j+1,c(1,2)]<-c(j,energytesel)
     energytesel
   }
-  nu2 <- nu_sq(points = points, rec = rec, n = 100)
-  return(list(histpts,energhist,nu2))
+  # nu2 <- nu_sq(points = points, rec = rec, n = 100)
+  return(list(points_evolution=histpts, 
+              energy_evolution=energhist
+              # nu_2=nu2
+              ))
 }
