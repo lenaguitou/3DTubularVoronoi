@@ -109,7 +109,7 @@ results_par<-foreach(i=c(1,2), .combine = rbind, .packages = "deldir") %dopar% {
   
   simulation_params <- list(algorithm="static", parameters=parameters)
   
-  do.call(perform_simulations, parameters)
+  do.call(perform_simulations, simulation_params)
   
 }
 
