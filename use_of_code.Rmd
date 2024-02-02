@@ -23,9 +23,9 @@ Set the necessary parameters. It can by done manually or by changing the values 
 ```{r}
 params = list(
   seed = 42, # 
-  steps = 1, # simulation steps
+  steps = 10, # simulation steps
   n = 100, # number of cells
-  L=6, # numbers of layers
+  L=3, # numbers of layers
   RadiusA = 5/(2*pi), # apical radius
   Ratio = 2.5, # ratio between apical and basal radius 
   cyl_length = 20, # cylinder length
@@ -204,7 +204,7 @@ Nu squared contains the single value of the metric after performing all the iter
 Now let's analyze the results we have got. First we import our library that contains the necessary code and functions.
 
 ```{r,include=FALSE}
-PATH_ANALYSIS = "∼/3DTubularVoronoi/Source/source_analysis.R"
+PATH_ANALYSIS = "tubular_simulations_source/source_analysis.R"
 source(PATH_ANALYSIS)
 ```
 
