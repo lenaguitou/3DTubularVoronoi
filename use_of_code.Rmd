@@ -57,7 +57,7 @@ algorithm <- simulation$algorithm
 
 Setting the parameters:
 ```{r}
-list(result_alg, parameters, algorithm) <- perform_simulations(algorithm="static", parameters=params)
+result_alg <- perform_simulations(algorithm="static", parameters=params)
 ```
 
 Simulations with bending:
