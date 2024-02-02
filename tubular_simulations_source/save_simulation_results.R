@@ -34,3 +34,9 @@ save_results <- function(simulation) {
 }
 
 
+load_results <- function(filename) {
+  # FUNCTION TO RECOVER THE SIMULATION RESULTS
+  # It recovers the simulation saved with the previous function save_results
+  recovered_simulation <- readRDS(filename)
+  return(recovered_simulation)
+}
