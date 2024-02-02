@@ -12,10 +12,11 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 # Running Metropolis algorithm
  
  
-```{r}
+```{r message=FALSE, warning=FALSE}
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
 ```
+
 
 ### Optional
 Set the necessary parameters. It can by done manually or by changing the values in "/models/model_parameters.R" file.
@@ -40,22 +41,63 @@ params = list(
 
 The function that performs Metropolis Algorithm is called "perform_simulations". Now we do a call of the function with the parameters (if the parameters aren't passed, it uses the file mentioned above). With the same function we can perform both static simulations and with bending. 
 
+
 ```{r}
 result_alg <- perform_simulations(algorithm="static")
 ```
 
+If we want to return the parameters used in the simulation, we can set "return_params=TRUE", and recover the results as follows. This is useful only when we want to save the results (to know the parameters used for later)
+```{r}
+simulation <- perform_simulations(algorithm="static", return_params=TRUE)
+
+result_alg <- simulation$results
+parameters <- simulation$parameters
+algorithm <- simulation$algorithm
+```
+
 Setting the parameters:
 ```{r}
-result_alg <- perform_simulations(algorithm="static", parameters=params)
+list(result_alg, parameters, algorithm) <- perform_simulations(algorithm="static", parameters=params)
 ```
 
 Simulations with bending:
 ```{r}
-result_alg_bending <- perform_simulations(algorithm="bending")
+result_alg_bending <- list(result_alg_bending, parameters, algorithm) <- perform_simulations(algorithm="bending")
 ```
 
 
-### Section in progress (Save and read results)
+## Saving and reading results
+
+
+### Saving results.
+It is done with the function save_results, found in the file "tubular_simulations_source/save_simulation_results.R".
+
+```{r}
+source("tubular_simulations_source/save_simulation_results.R")
+```
+
+If we haven't put the return_params=TRUE when executing the function, i.e.,
+perform_simulations(return_params=TRUE), we should do:
+```{r}
+# simulation <- list(results=results, parameters=parameters, algorithm=algorithm)
+```
+
+with the corresponding values of results, parameters and algorithm. Then we just execute the following.
+
+```{r}
+save_results(simulation)
+```
+
+```{r}
+# CHANGE file_name WITH THE CORRESPONDING PATH (check the folder results)
+filename <- "results/static/results_simulation_24_01_29.RData"
+simulation <- load_results(filename)
+result_alg <- simulation$results
+parameters <- simulation$parameters
+algorithm <- simulation$algorithm
+
+```
+
 
 ```{r}
 library(jsonlite)
@@ -112,9 +154,7 @@ results_par<-foreach(i=c(1,2), .combine = rbind, .packages = "deldir") %dopar% {
   do.call(perform_simulations, simulation_params)
   
 }
-
 stopCluster(cl)
-
 stopImplicitCluster()
 ```
 

@@ -7,7 +7,8 @@ source("tubular_simulations_source/models/model_parameters.R")
 
 perform_simulations<-function(
     parameters=NULL,
-    algorithm="static"
+    algorithm="static",
+    return_params=FALSE
 ){
   
   if (algorithm=="static") {
@@ -26,5 +27,9 @@ perform_simulations<-function(
     stop("Introduce a valid value for parameter algorithm: 
          'static' or 'bending'")
   }
-  return(result_alg)
+  if(return_params){
+    return(list(results=result_alg, parameters=parameters, algorithm=algorithm))
+  }else{
+    return(result_alg)
+  }
 }
