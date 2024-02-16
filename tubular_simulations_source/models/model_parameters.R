@@ -1,7 +1,7 @@
 parameters_static <- list(
   seed = 42, # 
   steps = 5, # simulation steps
-  n = 50, # number of cells
+  n = 100, # number of cells
   L=4, # numbers of layers
   RadiusA = 5/(2*pi), # apical radius
   Ratio = 2.5, # ratio between apical and basal radius 
@@ -16,7 +16,7 @@ parameters_static <- list(
 parameters_bending <- list(
   seed = 42, # 
   steps = 5, # simulation steps
-  n = 50, # number of cells
+  n = 100, # number of cells
   L=4, # numbers of layers
   RadiusA = 5/(2*pi), # apical radius
   Ratio = 2.5, # ratio between apical and basal radius 

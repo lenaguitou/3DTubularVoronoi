@@ -187,8 +187,8 @@ energy_iteration <- function(pointsx, pointsy, n=100, Lay = 10){
 energy_analisis_1sim <- function(histpts, it = 150, lay = 10, n =100){
   histener<-data.frame(it = 1:it, elen = double(it), tenen = double(it),
                        conten = double(it), toten = double(it))
-  
-  for (i in 1:it) {
+  print(head(histpts))
+  for (i in 1:(it+1)) {
     pts <- filter(histpts, Frame==i)
     histener[i,c(2,3,4,5)] <- energy_iteration(pts$x,pts$y, n = n, Lay = lay)
   }
@@ -249,11 +249,11 @@ energy_1_layer <- function(pointsx, pointsy, rec, i, Lay =10, n=100){
   tilest <- tile.list(tesel)[(n+1):(2*n)]
   
   perims <- (tilePerim(tilest)$perimeters)/sqrt(A0)
-  areas <- sapply(tilest,function(x){x$area/A0})
+  areas <- sapply(tilest,function(x){(x$area/A0)-1})
   
   gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1 )
   
-  tesener<-sum((areas-1)^2+(gam/2)*(perims^2)+
+  tesener<-sum((areas)^2+(gam/2)*(perims^2)+
                  lamad*perims)/(Lay*n)
   return(tesener)
 }

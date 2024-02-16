@@ -1,4 +1,3 @@
-library(jsonlite)
 library(foreach)
 library(doParallel)
 source("tubular_simulations_source/models/model_static.R")

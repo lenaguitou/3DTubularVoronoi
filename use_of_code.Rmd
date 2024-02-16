@@ -8,9 +8,30 @@ This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute
 
 Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
 
+# Before starting to run anything:
+
+We first check if we have the necessary dependencies to run the code:
+```{r}
+dependencies <- c(
+  "dplyr",
+  "deldir",
+  "ggplot2",
+  "plotly",
+  "foreach",
+  "doParallel",
+  "ggvoronoi",
+  "gganimate")
+
+for(dep in dependencies){
+  if(!require(dep, character.only = TRUE)){
+    install.packages(dep)
+  }
+}
+```
+
+
  
 # Running Metropolis algorithm
- 
  
 ```{r message=FALSE, warning=FALSE}
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
@@ -99,28 +120,6 @@ algorithm <- simulation$algorithm
 ```
 
 
-```{r}
-library(jsonlite)
-
-time <- format(Sys.time(), "%Y_%m_%d__%H_%M")
-
-
-get_results <- function(path){
-  fromJSON(path)
-  points_evolution <- as.data.frame(results$points_evolution)
-  energy_evolution <- as.data.frame(results$energy_evolution)
-  nu_2 <- results$nu_2
-  parameters <- results$parameters_used
-  algorithm_used <- results$algorithm_used
-  time_of_execution <- results$time_end_execution
-  return(c(points_evolution, energy_evolution, nu_2, parameters, algorithm_used,
-           time_of_execution))
-}
-
-results<-get_results(path_results)
-```
-
-
 # Parallel execution
 
 If we want to execute a parallel execution with multiple simulations at the same time, it is also possible with the following syntax. In this example, we use 4 clusters for execution (the default number of cores in ordinary laptops), and we want to perform different simulations changing the number of layers "L", but with the rest of parameters with default values. We could also perform all of the simulations with the same parameters, depending on the objective.
@@ -154,12 +153,44 @@ results_par<-foreach(i=c(1,2), .combine = rbind, .packages = "deldir") %dopar% {
   do.call(perform_simulations, simulation_params)
   
 }
+
 stopCluster(cl)
 stopImplicitCluster()
 ```
 
 
 Now we have the desired results stored in the variable "result_alg". Let's deep into this variable, which has 3 elements: the history of points locations in every step, the history of the energy at every step, and the value of nu squared, which is a metric over the topology of the surface.
+
+
+### Execution changing different parameters at the same time
+
+```{r}
+results_par <- foreach(i=vec_i, .combine=rbind, .packages="deldir") %:% 
+                foreach(j=vec_j, .combine=rbind, .packages="deldir") %dopar% {
+  
+  parameters = list(
+    seed = 42,
+    steps = 100,
+    n = 100,
+    L=3*i,
+    RadiusA = 5/(2*pi),
+    Ratio = 2.5,
+    cyl_length = 20,
+    gamma_ad = 0.15, 
+    lambda_ad = 0.04, 
+    beta = 100, 
+    s0=j  # Aquí puedes usar j
+  )
+  
+  simulation_params <- list(algorithm="static", parameters=parameters)
+  
+  do.call(perform_simulations, simulation_params)
+  
+}
+```
+
+
+
 
 ### Dataframe with history of points
 
@@ -241,7 +272,6 @@ enerhist_bytype <- energy_analisis_1sim(hist_points, it =steps, lay = L, n = n)
 knitr::kable(enerhist_bytype[1:3,], format="html")
 plot_energyss(enerhist_bytype)
 ```
-
 
 The function energy_analysis_nobend takes as argument the history of points in 1 simulations. Then it returns the initial energy decomposition by layers (separated by energy type) and the final energy decomposition (also by layer). The function also makes the 2 corresponding plots.
 

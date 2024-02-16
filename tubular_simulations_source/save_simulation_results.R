@@ -1,4 +1,4 @@
-save_results <- function(simulation) {
+save_results <- function(simulation, save_parallel=FALSE) {
   
   # FUNCTION TO SAVE RESULTS
   # It receives a list simulation, which is the direct return of the function
@@ -10,6 +10,24 @@ save_results <- function(simulation) {
   #   - simulation$parameters. The parameters used by this function
   #   - simulation$algorithm. The algorithm used in the simulation (could be
   #     "static" or "bending").
+  
+  if (save_parallel == TRUE) {
+    date <- format(Sys.Date(), "%y_%m_%d")
+    if (!dir.exists(paste0("results_parallel/"))) {
+      dir.create(paste0("results_parallel/"), recursive = TRUE)
+    }
+    filename <- paste0("results_parallel/","/results_simulation_", date, ".RData")
+    
+    # verify if file already exists
+    counter <- 1
+    while (file.exists(filename)) {
+      filename <- paste0("results_parallel/", "/results_simulation_", date, "_", counter, ".RData")
+      counter <- counter + 1
+    }
+    
+    # Save
+    saveRDS(simulation, file = filename)
+  }
   
   algorithm <- as.character(simulation$algorithm)
   date <- format(Sys.Date(), "%y_%m_%d")
@@ -40,3 +58,4 @@ load_results <- function(filename) {
   recovered_simulation <- readRDS(filename)
   return(recovered_simulation)
 }
+
