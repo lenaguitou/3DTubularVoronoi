@@ -185,8 +185,8 @@ energy_iteration <- function(pointsx, pointsy, n=100, Lay = 10){
 }
 
 energy_analisis_1sim <- function(histpts, it = 150, lay = 10, n =100){
-  histener<-data.frame(it = 1:it, elen = double(it), tenen = double(it),
-                       conten = double(it), toten = double(it))
+  histener<-data.frame(it = 1:(it+1), elen = double(it+1), tenen = double(it+1),
+                       conten = double(it+1), toten = double(it+1))
   print(head(histpts))
   for (i in 1:(it+1)) {
     pts <- filter(histpts, Frame==i)
@@ -221,27 +221,29 @@ plot_energyss<-function(enerhist){
   show(p)
 }
 
-energy_layers_sim1 <- function(histpts,it = 150, Lay = 10, n = 100, rect = rec){
+energy_layers_sim1 <- function(histpts, it = 150, Lay = 10, n = 100, rect = rec) {
   
-  tesener <- data.frame( iter = 1:it)
+  tesener <- data.frame(iter = 1:(it + 1))
   
-  for (i in 1:it) {
-    pts<-filter(histpts,Frame==i)
-    ener<-rep(0,6)
-    k<-1
-    layers_energy <- seq(1,Lay, by =2)
-    for (j in layers_energy) {
-      ener[[k]] <- energy_1_layer(pts$x*(rad[[j]]/rad[[1]]),pts$y,rect[[j]],
-                                  i = j, Lay = Lay, n = n)
-      k<-k+1
-    }
-    layers_len <- seq(2,length(layers_energy)+1,by = 1)
+  for (i in 1:(it + 1)) {
+    pts <- filter(histpts, Frame == i)
+    ener <- rep(0, Lay)
     
-    tesener[i,layers_len] <- ener
+    layers_energy <- seq(1, Lay, by = 1)
+    
+    for (j in layers_energy) {
+      ener[j] <- energy_1_layer(pts$x * (rad[[j]] / rad[[1]]), pts$y, rect[[j]],
+                                i = j, Lay = Lay, n = n)
+    }
+    
+    tesener[i, 2:(Lay + 1)] <- ener
   }
-  colnames(tesener)<- c(c("iter"), paste0("layer_",layers_energy))
+  
+  colnames(tesener)[2:(Lay + 1)] <- paste0("layer_", 1:Lay)
+  
   return(tesener)
 }
+
 
 energy_1_layer <- function(pointsx, pointsy, rec, i, Lay =10, n=100){
   
@@ -264,5 +266,4 @@ plot_energy_decomp <- function(layers_hist) {
   ggplot(df_largo, aes(x = iter, y = valor, color = variable)) +
     geom_line() +
     labs(title="Energy relaxation by layer",x = "Iteration", y = "Energy", color = "Layer")
-  
 }

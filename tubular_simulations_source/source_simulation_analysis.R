@@ -103,14 +103,18 @@ stationarylewis<-function(edgear){
   show(histedges)
 }
 
-ord <- function(results, iter = 150, sim=100){
+ord <- function(results, iter = 150, n=100, sim=100){
   #With this function we extract the points for one iteration of every simulation
   #iter is the specific iteration of the algorithm that we extract to make the analysis
-  
-  ptsord<-data.frame(x=numeric(300*sim),y=numeric(300*sim),simulation=numeric(300*sim))
+  iter = iter+1
+  n_points = 3*n
+  ptsord<-data.frame(x=numeric(n_points*sim),
+                     y=numeric(n_points*sim), 
+                     Frame=numeric(n_points*sim),
+                     simulation=numeric(n_points*sim))
   for (i in 0:(sim-1)) {
-    ptsord[(i*300+1):((i+1)*300),c(1,2)]<-results[[i+1]][results[[i+1]]$Frame==iter,c(1,2)]
-    ptsord[(i*300+1):((i+1)*300),3]<-i+1
+    ptsord[(i*(n_points*iter)+1):((i+1)*(n_points*iter)),c(1,2,3)]<-results[[i+1]][c(1,2,3)]
+    ptsord[(i*(n_points*iter)+1):((i+1)*(n_points*iter)),4]<-i+1
   }
   return(ptsord)
 }

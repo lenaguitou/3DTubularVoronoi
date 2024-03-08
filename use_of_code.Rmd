@@ -12,21 +12,21 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 
 We first check if we have the necessary dependencies to run the code:
 ```{r}
-dependencies <- c(
-  "dplyr",
-  "deldir",
-  "ggplot2",
-  "plotly",
-  "foreach",
-  "doParallel",
-  "ggvoronoi",
-  "gganimate")
-
-for(dep in dependencies){
-  if(!require(dep, character.only = TRUE)){
-    install.packages(dep)
-  }
-}
+# dependencies <- c(
+#   "dplyr",
+#   "deldir",
+#   "ggplot2",
+#   "plotly",
+#   "foreach",
+#   "doParallel",
+#   "ggvoronoi",
+#   "gganimate")
+# 
+# for(dep in dependencies){
+#   if(!require(dep, character.only = TRUE)){
+#     install.packages(dep)
+#   }
+# }
 ```
 
 
@@ -83,14 +83,15 @@ result_alg <- perform_simulations(algorithm="static", parameters=params)
 
 Simulations with bending:
 ```{r}
-result_alg_bending <- list(result_alg_bending, parameters, algorithm) <- perform_simulations(algorithm="bending")
+result_alg_bending <- perform_simulations(algorithm="bending")
+```
+
+```{r}
+result_alg_bending
 ```
 
 
-## Saving and reading results
-
-
-### Saving results.
+## Saving and loading results.
 It is done with the function save_results, found in the file "tubular_simulations_source/save_simulation_results.R".
 
 ```{r}
@@ -109,6 +110,7 @@ with the corresponding values of results, parameters and algorithm. Then we just
 save_results(simulation)
 ```
 
+To load the results:
 ```{r}
 # CHANGE file_name WITH THE CORRESPONDING PATH (check the folder results)
 filename <- "results/static/results_simulation_24_01_29.RData"
@@ -136,7 +138,7 @@ results_par<-foreach(i=c(1,2), .combine = rbind, .packages = "deldir") %dopar% {
   
   parameters = list(
   seed = 42,
-  steps = 100,
+  steps = 5,
   n = 100,
   L=3*i,
   RadiusA = 5/(2*pi),
@@ -189,16 +191,35 @@ results_par <- foreach(i=vec_i, .combine=rbind, .packages="deldir") %:%
 }
 ```
 
+## Saving results of parallel execution.
+
+
+It is done with the same function as before, save_results, found in the file "tubular_simulations_source/save_simulation_results.R". We load it.
+
+```{r}
+source("tubular_simulations_source/save_simulation_results.R")
+```
+
+Now we just save the results, with parameter save_parallel set to TRUE.
+
+```{r include=FALSE}
+save_results(results_par, save_parallel=TRUE)
+```
+
+
+```{r}
+# CHANGE file_name WITH THE CORRESPONDING PATH (check the folder results)
+filename <- "results/parallel/results_simulation_24_02_21.RData"
+loaded_results_par <- load_results(filename)
+```
 
 
 
 ### Dataframe with history of points
 
 ```{r}
-hist_points = result_alg[[1]]
-knitr::kable(hist_points[1:5,], format="html")
+hist_points = result_alg$points_evolution
 ```
-
 
 We see 3 columns. Every row represents a point, the columns "x" and "y"
 represent the x and y coordinates of the point, and the column "Frame" 
@@ -208,8 +229,7 @@ respresent the step of the algorithm. So, if we have executed the code for
 ### History of energy levels
 
 ```{r}
-hist_energy = result_alg[[2]]
-knitr::kable(hist_energy[1:4,], format="html")
+hist_energy = result_alg$energy_evolution
 ```
 
 We see that hist_energy contains simply 2 columns, one indicating the iteration 
@@ -220,14 +240,11 @@ steps we will have 250 rows.
 ### Nu squared
 
 ```{r}
-nu = result_alg[[3]]
-knitr::kable(nu, format="html")
+# nu = result_alg[[3]]
+# knitr::kable(nu, format="html")
 ```
 
 Nu squared contains the single value of the metric after performing all the iterations of the algorithm.
-
-
-
 
 
 # Analysis of the results
@@ -239,7 +256,10 @@ PATH_ANALYSIS = "tubular_simulations_source/source_analysis.R"
 source(PATH_ANALYSIS)
 ```
 
+We recover the parameters used (in this case we used parameters_static from the file of parameters).
 ```{r}
+params <- parameters_static
+
 rad_coef = params$Ratio
 steps = params$steps
 Radius = params$RadiusA
@@ -268,15 +288,15 @@ gamad = params$gamma_ad
 The function energy_analisis_1sim  takes as argument the points in each iteration and returns the energy shelled by type in each iteration (an extension of the energy history). The columns represents the elastic, contractile and tensile energy, together with the sum of all (the total energy). The function plot_energyss takes the output of this function and makes a plot
 
 ```{r}
+print(steps)
 enerhist_bytype <- energy_analisis_1sim(hist_points, it =steps, lay = L, n = n)
-knitr::kable(enerhist_bytype[1:3,], format="html")
+# knitr::kable(enerhist_bytype[1:3,], format="html")
 plot_energyss(enerhist_bytype)
 ```
 
 The function energy_analysis_nobend takes as argument the history of points in 1 simulations. Then it returns the initial energy decomposition by layers (separated by energy type) and the final energy decomposition (also by layer). The function also makes the 2 corresponding plots.
 
 ```{r}
-
 results_analysis <-energy_analysis_nobend(histpts = hist_points, it = steps, n = n, Lay =L)
 initial_energies <- results_analysis[[1]]
 final_energies <- results_analysis[[2]]
@@ -288,7 +308,7 @@ The function energy_layers_sim_1 returns 1 dataframe with several columns, corre
 
 ```{r}
 hist_layers<-energy_layers_sim1(histpts = hist_points, it = steps, Lay =L, n =n, rect = rec)
-knitr::kable(hist_layers[1:3,], format="html")
+# knitr::kable(hist_layers[1:3,], format="html")
 plot_energy_decomp(hist_layers)
 ```
 
@@ -296,10 +316,12 @@ plot_energy_decomp(hist_layers)
 
 
 ```{r,include=FALSE}
-PATH_SIMANALYSIS = "∼/3DTubularVoronoi/Source/source_simulation_analysis.R"
+PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
 ```
 
+
+First, we use the function ord to join all the results from each simulation into a bigger dataframe
 
 ```{r}
 simulations = 2
