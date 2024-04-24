@@ -27,6 +27,7 @@ save_results <- function(simulation, save_parallel=FALSE) {
     
     # Save
     saveRDS(simulation, file = filename)
+    print(paste0("Results saved successfully in path: ", filename))
     return(NULL)
   }
   
