@@ -284,9 +284,8 @@ library(doParallel)
       gc()
     }
     save(histpts, file = paste0("results_", i, ".Rds"))
-    # nu2 <- nu_sq(points = points, rec = rec, n = 100)
+    nu2 <- nu_sq(points = points, rec = rec, n = 100)
     return(list(points_evolution=histpts,
-                energy_evolution=energhist
-                # nu_2=nu2
-           ))
+                energy_evolution=energhist,
+                nu_2=nu2))
   }

@@ -53,7 +53,6 @@ save_results <- function(simulation, save_parallel=FALSE) {
   saveRDS(simulation, file = filename)
 }
 
-
 load_results <- function(filename) {
   # FUNCTION TO RECOVER THE SIMULATION RESULTS
   # It recovers the simulation saved with the previous function save_results
