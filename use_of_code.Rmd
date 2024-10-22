@@ -29,7 +29,7 @@ We first check if we have the necessary dependencies to run the code:
 # }
 ```
 
-
+ 
  
 # Running Metropolis algorithm
  
@@ -39,22 +39,22 @@ source(PATH_MODEL)
 ```
 
 
-### Optional
-Set the necessary parameters. It can by done manually or by changing the values in "/models/model_parameters.R" file.
+### Setting the parameters
+Set the necessary parameters.
 ```{r}
 params = list(
   seed = 42, # 
-  steps = 10, # simulation steps
-  n = 100, # number of cells
-  L=3, # numbers of layers
-  RadiusA = 5/(2*pi), # apical radius
-  Ratio = 2.5, # ratio between apical and basal radius 
+  n_steps = 2, # simulation steps
+  n_cells = 100, # number of cells
+  n_layers=3, # numbers of layers
+  apical_rad = 5/(2*pi), # apical radius
+  ratio_rad = 2.5, # ratio between apical and basal radius
   cyl_length = 20, # cylinder length
-  gamma_ad = 0.15, #  contractility
-  lambda_ad = 0.04, # adhesion 
-  # elastic K = 1 cause adimentionality
+  gamma = 0.15, #  contractility
+  lambda = 0.04, # adhesion 
+  # kappa = 1 cause adimentionality
   beta = 100, #constant involved in jumps because of perturbations
-  s0=1 #
+  s0_ratio=1 #
   )
 ```
 
@@ -64,26 +64,36 @@ The function that performs Metropolis Algorithm is called "perform_simulations".
 
 
 ```{r}
-result_alg <- perform_simulations(algorithm="static")
+result_alg <- perform_simulations(algorithm="static", parameters=params)
 ```
 
 If we want to return the parameters used in the simulation, we can set "return_params=TRUE", and recover the results as follows. This is useful only when we want to save the results (to know the parameters used for later)
 ```{r}
-simulation <- perform_simulations(algorithm="static", return_params=TRUE)
+simulation <- perform_simulations(algorithm="static", parameters=params, return_params=TRUE)
 
 result_alg <- simulation$results
 parameters <- simulation$parameters
 algorithm <- simulation$algorithm
 ```
 
-Setting the parameters:
-```{r}
-result_alg <- perform_simulations(algorithm="static", parameters=params)
-```
-
 Simulations with bending:
 ```{r}
-result_alg_bending <- perform_simulations(algorithm="bending")
+params_bending <- list(
+  seed = 42, # 
+  steps = 2, # simulation steps
+  n = 100, # number of cells
+  L=3, # numbers of layers
+  RadiusA = 5/(2*pi), # apical radius
+  Ratio = 2.5, # ratio between apical and basal radius 
+  cyl_length = 20, # cylinder length
+  gamma_ad = 0.15, #  contractility
+  lambda_ad = 0.04, # adhesion 
+  # elastic K = 1 cause adimentionality
+  omega = 1, # Bending Constant (Omega)
+  beta = 100, #constant involved in jumps because of perturbations
+  s0=1 # 
+)
+result_alg_bending <- perform_simulations(algorithm="bending", parameters=params_bending)
 ```
 
 ```{r}
@@ -91,28 +101,9 @@ result_alg_bending
 ```
 
 
-## Saving and loading results.
-It is done with the function save_results, found in the file "tubular_simulations_source/save_simulation_results.R".
-
-```{r}
-source("tubular_simulations_source/save_simulation_results.R")
-```
-
-If we haven't put the return_params=TRUE when executing the function, i.e.,
-perform_simulations(return_params=TRUE), we should do:
-```{r}
-# simulation <- list(results=results, parameters=parameters, algorithm=algorithm)
-```
-
-with the corresponding values of results, parameters and algorithm. Then we just execute the following.
-
-```{r}
-save_results(simulation)
-```
-
 To load the results:
 ```{r}
-# CHANGE file_name WITH THE CORRESPONDING PATH (check the folder results)
+# CHANGE file_name WITH THE CORRESPONDING PATH (run the perform_simulations function with save=TRUE, and check the folder results)
 filename <- "results/static/results_simulation_24_01_29.RData"
 simulation <- load_results(filename)
 result_alg <- simulation$results
@@ -137,20 +128,21 @@ registerDoParallel(cl)
 results_par<-foreach(i=c(1,2), .combine = rbind, .packages = "deldir") %dopar% {
   
   parameters = list(
-  seed = 42,
-  steps = 5,
-  n = 100,
-  L=3*i,
-  RadiusA = 5/(2*pi),
-  Ratio = 2.5,
-  cyl_length = 20,
-  gamma_ad = 0.15, 
-  lambda_ad = 0.04, 
-  beta = 100, 
-  s0=1
+  seed = 42, # 
+  n_steps = 2, # simulation steps
+  n_cells = 100, # number of cells
+  n_layers=3, # numbers of layers
+  apical_rad = 5/(2*pi), # apical radius
+  ratio_rad = 2.5, # ratio between apical and basal radius
+  cyl_length = 20, # cylinder length
+  gamma = 0.15, #  contractility
+  lambda = 0.04, # adhesion 
+  # kappa = 1 cause adimentionality
+  beta = 100, #constant involved in jumps because of perturbations
+  s0_ratio=1 #
   )
   
-  simulation_params <- list(algorithm="static", parameters=parameters)
+  simulation_params <- list(algorithm="static", parameters=parameters, save=FALSE)
   
   do.call(perform_simulations, simulation_params)
   
@@ -167,24 +159,27 @@ Now we have the desired results stored in the variable "result_alg". Let's deep 
 ### Execution changing different parameters at the same time
 
 ```{r}
+vec_i<-c(1,2,3)
+vec_j<-c(0.1,0.2,0.3)
 results_par <- foreach(i=vec_i, .combine=rbind, .packages="deldir") %:% 
                 foreach(j=vec_j, .combine=rbind, .packages="deldir") %dopar% {
   
   parameters = list(
-    seed = 42,
-    steps = 100,
-    n = 100,
-    L=3*i,
-    RadiusA = 5/(2*pi),
-    Ratio = 2.5,
-    cyl_length = 20,
-    gamma_ad = 0.15, 
-    lambda_ad = 0.04, 
-    beta = 100, 
-    s0=j  # Aquí puedes usar j
+  seed = vec_i, # 
+  n_steps = 2, # simulation steps
+  n_cells = 100, # number of cells
+  n_layers=3, # numbers of layers
+  apical_rad = 5/(2*pi), # apical radius
+  ratio_rad = 2.5, # ratio between apical and basal radius
+  cyl_length = 20, # cylinder length
+  gamma = vec_j, #  contractility
+  lambda = 0.04, # adhesion 
+  # kappa = 1 cause adimentionality
+  beta = 100, #constant involved in jumps because of perturbations
+  s0_ratio=1 #
   )
   
-  simulation_params <- list(algorithm="static", parameters=parameters)
+  simulation_params <- list(algorithm="static", parameters=parameters, save=FALSE)
   
   do.call(perform_simulations, simulation_params)
   
@@ -192,7 +187,6 @@ results_par <- foreach(i=vec_i, .combine=rbind, .packages="deldir") %:%
 ```
 
 ## Saving results of parallel execution.
-
 
 It is done with the same function as before, save_results, found in the file "tubular_simulations_source/save_simulation_results.R". We load it.
 
@@ -256,21 +250,19 @@ PATH_ANALYSIS = "tubular_simulations_source/source_analysis.R"
 source(PATH_ANALYSIS)
 ```
 
-We recover the parameters used (in this case we used parameters_static from the file of parameters).
+We recover the parameters used before.
 ```{r}
-params <- parameters_static
-
-rad_coef = params$Ratio
-steps = params$steps
-Radius = params$RadiusA
+rad_coef = params$ratio_rad
+steps = params$n_steps
+Radius = params$apical_rad
 Radius2 <- rad_coef*Radius
 cyl_thickness <- Radius2-Radius
 cyl_length = params$cyl_length
 cyl_width = Radius*(2*pi)
 rec <- list()
 rad <- list()
-L = params$L
-n = params$n
+L = params$n_layers
+n = params$n_cells
 A0 <- ((Radius2+Radius)*pi*cyl_length)/n
 xmin <- 0
 ymin <- 0
@@ -280,8 +272,8 @@ for(k in 1:L){
   rad[[k]]<- Radius+(k-1)*(cyl_thickness/(L-1)) #the radius of the layer k
   rec[[k]]<-c(xmin,xmin+3*(2*pi*rad[[k]]),ymin,ymax)
 }
-lamad = params$lambda_ad
-gamad = params$gamma_ad
+lamad = params$lambda
+gamad = params$gamma
 ```
 
 
