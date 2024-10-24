@@ -3,7 +3,7 @@
 
 Author: Eloy Tomás Serrano Andrés \
 Co-Authors: Léna Guitou \
-Last update: 01/2024
+Last update: 11/2024
 
 Tested on R version 4.3.1., RStudio version 2023.06.1+524. and Mathematica version ...
 
