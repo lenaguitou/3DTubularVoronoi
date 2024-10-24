@@ -21,9 +21,9 @@ Then, be sure you have installed the R packages and libraries required.
 
 ## Execution ##
 
-The main code is a R file to execute (do not forget to modify the ```PATH_PROJECT```). There is also a html tutorial if needed. 
+The main code is the R script *use_of_code.R*. This file is to execute the simulations and save data (do not forget to modify the ```PATH_PROJECT```).  
 
-In *Source* folder, there are the codes where the cylinders and analysis processes are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
+In *tubular_simulations_source* folder, there are the codes where the cylinders and analysis processes are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
 
 The second main folder is *Bending* but is still pending of improvements. 
 
