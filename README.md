@@ -21,7 +21,7 @@ Then, be sure you have installed the R packages and libraries required.
 
 ## Execution ##
 
-The main code is the R script *use_of_code.R*. This file is to execute the simulations and save data (do not forget to modify the ```PATH_PROJECT```).  
+The main code is the R script *use_of_code.Rmd*. This file is to execute the simulations and save data (do not forget to modify the ```PATH_PROJECT```).  
 
 In *tubular_simulations_source* folder, there are the codes where the cylinders and analysis processes are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
 
