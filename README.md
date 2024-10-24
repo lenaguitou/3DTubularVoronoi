@@ -25,5 +25,3 @@ The main code is the R script *use_of_code.Rmd*. This file is to execute the sim
 
 In *tubular_simulations_source* folder, there are the codes where the cylinders and analysis processes are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
 
-The second main folder is *Bending* but is still pending of improvements. 
-
