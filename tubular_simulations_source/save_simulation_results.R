@@ -1,4 +1,4 @@
-save_results <- function(simulation, save_parallel=FALSE) {
+save_results <- function(simulation,save_parallel=FALSE) {
   
   # FUNCTION TO SAVE RESULTS
   # It receives a list simulation, which is the direct return of the function
@@ -13,20 +13,22 @@ save_results <- function(simulation, save_parallel=FALSE) {
   
   if (save_parallel == TRUE) {
     date <- format(Sys.Date(), "%y_%m_%d")
-    if (!dir.exists(paste0("results_parallel/"))) {
-      dir.create(paste0("results_parallel/"), recursive = TRUE)
+    if (!dir.exists(paste0("results/parallel/"))) {
+      dir.create(paste0("results/parallel/"), recursive = TRUE)
     }
-    filename <- paste0("results_parallel/","/results_simulation_", date, ".RData")
+    filename <- paste0("results/parallel/","/results_simulation_", date, ".RData")
     
     # verify if file already exists
     counter <- 1
     while (file.exists(filename)) {
-      filename <- paste0("results_parallel/", "/results_simulation_", date, "_", counter, ".RData")
+      filename <- paste0("results/parallel/", "/results_simulation_", date, "_", counter, ".RData")
       counter <- counter + 1
     }
     
     # Save
     saveRDS(simulation, file = filename)
+    print(paste0("Results saved successfully in path: ", filename))
+    return(NULL)
   }
   
   algorithm <- as.character(simulation$algorithm)
@@ -50,7 +52,6 @@ save_results <- function(simulation, save_parallel=FALSE) {
   # Save
   saveRDS(simulation, file = filename)
 }
-
 
 load_results <- function(filename) {
   # FUNCTION TO RECOVER THE SIMULATION RESULTS

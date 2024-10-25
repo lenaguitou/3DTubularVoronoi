@@ -1,6 +1,6 @@
 library(deldir)
-library(ggplot2)
-library(gganimate)
+#library(ggplot2)
+#library(gganimate)
 library(dplyr)
 library(plotly)
 library(foreach)
@@ -25,13 +25,13 @@ library(doParallel)
 # in the N-cylinder folder.
 
 
-  bending_move_points<-function(pt, wid, len, rc, n = 100, Lay = 3, rad){
+  bending_move_points<-function(pt, wid, len, rc, n_cells = 100, n_layers = 3, rad){
     
     #We choose a cell
-    ind <-sample(1:n,1)
+    ind <-sample(1:n_cells,1)
     
     #Here we apply a movement to each layer. To do it efficiently we use lapply
-    pt <- lapply(1:Lay, function(i){
+    pt <- lapply(1:n_layers, function(i){
       
       ptinx <- pt[[i]]$x[[ind]]+rnorm(1,mean=0,sd=rc)
       ptiny <- pt[[i]]$y[[ind]]+rnorm(1,mean=0,sd=rc)
@@ -45,39 +45,39 @@ library(doParallel)
       }
       
       #Replicate the movement in the 2 copies of the cylinder rectangle
-      pt[[i]]$x[c(ind,ind+n,ind+2*n)] <- c(ptinx, ptinx+s*wid, ptinx+2*s*wid)
-      pt[[i]]$y[c(ind,ind+n,ind+2*n)] <- ptiny
+      pt[[i]]$x[c(ind,ind+n_cells,ind+2*n_cells)] <- c(ptinx, ptinx+s*wid, ptinx+2*s*wid)
+      pt[[i]]$y[c(ind,ind+n_cells,ind+2*n_cells)] <- ptiny
       pt[[i]]
     })
     return(pt)
   }
   
-  bending_tesellation_energy_N <- function(points, A0, rec, rad, gamad, lamad,
-                                           omg = 1, n, Lay = 3, s0=1){
+  bending_tesellation_energy_N <- function(points, A0, rec, rad, gamma, lambda,
+                                           omega = 1, n_cells, n_layers = 3, s0_ratio=1){
     
-    tesener <- numeric(Lay)
+    tesener <- numeric(n_layers)
     
     #We compute energy as in the original algorithm
-    tesener <- sapply(1:Lay, function(i){
+    tesener <- sapply(1:n_layers, function(i){
       
       tesel <- deldir(points[[i]]$x,points[[i]]$y,rw=rec[[i]])
-      tilest <- tile.list(tesel)[(n+1):(2*n)]
+      tilest <- tile.list(tesel)[(n_cells+1):(2*n_cells)]
       
       perims <- (tilePerim(tilest)$perimeters)/sqrt(A0)
       areas <- sapply(tilest,function(x){x$area/A0})
       
-      gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/s0)
+      gam<-gamma*exp((1-(rad[[i]]/rad[[1]]))/s0_ratio)
       
-      sum((areas-1)^2+(gam/2)*(perims^2)+lamad*perims)
+      sum((areas-1)^2+(gam/2)*(perims^2)+lambda*perims)
     })
     
     #We add a bending energy component, depending on the angle that the center 
     # does with the center above and below itself. That is why the apical and 
     # basal centers don't have bending energy
-    bendener <- sapply(2:(Lay-1), function(i){
+    bendener <- sapply(2:(n_layers-1), function(i){
       
       #First we compute the angles of every cell with the scalar product
-      angles <- sapply(1:n, function(j){
+      angles <- sapply(1:n_cells, function(j){
         
         #we compute the position of a cell center in a layer of the 3d cylinder
         ptcentral <- c(points[[i]]$y[j],
@@ -107,10 +107,10 @@ library(doParallel)
         return(ang)
       })
       #we use the angles to apply the bending energy formula
-      return(sum(omg*((angles-pi)^2)))
+      return(sum(omega*((angles-pi)^2)))
     })
     #we sum energies and return it, in this case the energy is normalized by layer.
-    return((sum(tesener)+sum(bendener))/Lay)
+    return((sum(tesener)+sum(bendener))/n_layers)
   }
   
   choice_metropolis<-function(delta,beta){
@@ -180,38 +180,39 @@ library(doParallel)
     show(ploten)
   }
   
-  nu_sq <- function(points, rec, n=100){
+  nu_sq <- function(points, rec, n_cells=100){
     Lay <- length(points)
     teselap <- deldir(points[[1]]$x, points[[1]]$y, rw = rec[[1]])
-    teselba <- deldir(points[[Lay]]$x, points[[Lay]]$y, rw = rec[[Lay]])
-    tilap <- tile.list(teselap)[(n+1):(2*n)]
-    tilba <- tile.list(teselba)[(n+1):(2*n)]
+    teselba <- deldir(points[[n_layers]]$x, points[[n_layers]]$y, rw = rec[[n_layers]])
+    tilap <- tile.list(teselap)[(n_cells+1):(2*n_cells)]
+    tilba <- tile.list(teselba)[(n_cells+1):(2*n_cells)]
     
     cellsdf<-data.frame(edgesA=integer(),edgesB=integer())
     for (i in 1:length(tilap)) {
       cellsdf[i,c(1,2)]<-c(length(tilap[[i]]$x),length(tilba[[i]]$x))
     }
-    num <- sum((cellsdf[,1]-cellsdf[,2])^2)/n
-    den <- 2*(sum(cellsdf[,1])/n)*(sum(cellsdf[,2])/n)
+    num <- sum((cellsdf[,1]-cellsdf[,2])^2)/n_cells
+    den <- 2*(sum(cellsdf[,1])/n_cells)*(sum(cellsdf[,2])/n_cells)
     return(num/den)
   }
   
   #comienza el programa
   
   
-  metropolisad_ben<-function(seed = 666, steps = 250, n = 100, L = 5,
-                         RadiusA = 5/(2*pi), Ratio = 2.5, cyl_length = 20,
-                         gamma_ad = 0.15, lambda_ad = 0.04, s0 = 1,
+  metropolisad_ben<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers = 5,
+                         apical_rad = 5/(2*pi), ratio_rad = 2.5, cyl_length = 20,
+                         gamma = 0.15, lambda = 0.04, s0_ratio = 1,
                          omega = 1, beta = 100){
     
     
     #We define our variables
     
-    RadiusB <- Ratio*RadiusA
-    cyl_width_A <- 2*pi*RadiusA
+    
+    RadiusB <-ratio_rad*apical_rad
+    cyl_width_A <- 2*pi*apical_rad
     cyl_width_B <- 2*pi*RadiusB
     
-    cyl_thickness <- RadiusB-RadiusA
+    cyl_thickness <- RadiusB-apical_rad
     
     #We define the vertices of the apical plane
     
@@ -220,14 +221,14 @@ library(doParallel)
     ymin <- 0
     ymax <- cyl_length
     
-    r <- cyl_width_A/n #radius to make the moves
-    Am <- ((RadiusA+RadiusB)*pi*cyl_length)/n
+    r <- cyl_width_A/n_cells #radius to make the moves
+    Am <- ((apical_rad+RadiusB)*pi*cyl_length)/n_cells
     
     rec <- list()
     rad <- list()
     
-    for(k in 1:L){
-      rad[[k]]<- RadiusA+(k-1)*(cyl_thickness/(L-1)) #the radius of the layer k
+    for(k in 1:n_layers){
+      rad[[k]]<- apical_rad+(k-1)*(cyl_thickness/(n_layers-1)) #the radius of the layer k
       rec[[k]]<-c(xmin,xmin+3*(2*pi*rad[[k]]),ymin,ymax)
     }
     
@@ -235,39 +236,39 @@ library(doParallel)
     
     set.seed(seed)
     
-    x1 <- runif(n,xmin,xmax)
-    y1 <- runif(n,ymin,ymax)
+    x1 <- runif(n_cells,xmin,xmax)
+    y1 <- runif(n_cells,ymin,ymax)
     x <-c(x1,x1+cyl_width_A,x1+2*cyl_width_A)
     y <-c(y1,y1,y1)
     
-    points <- vector(mode = "list", length = L)
-    points <- lapply(1:L, function(i){data.frame(x = (rad[[i]]/rad[[1]])*x, y = y )})
+    points <- vector(mode = "list", length = n_layers)
+    points <- lapply(1:n_layers, function(i){data.frame(x = (rad[[i]]/rad[[1]])*x, y = y )})
     
     pointsinit <- points
     energytesel <- bending_tesellation_energy_N(points, Am, rec , rad,
-                                        gamma_ad, lambda_ad, omega, n, L, s0)
+                                        gamma, lambda, omega, n_cells, n_layers, s0_ratio)
     
     #We create the variables to store the results
     
-    energhist <- data.frame(iteration=numeric(steps), energy=numeric(steps))
+    energhist <- data.frame(iteration=numeric(n_steps), energy=numeric(n_steps))
     energhist[1,c(1,2)] <- c(0,energytesel)
     
-    histpts <- vector(mode="list", length = L)
+    histpts <- vector(mode="list", length = n_layers)
     
-    for (i in 1:L) {
-      histpts[[i]] <- data.frame(x = double(3*n*steps), y = double(3*n*steps), Frame = double(3*n*steps))
+    for (i in 1:n_layers) {
+      histpts[[i]] <- data.frame(x = double(3*n_cells*n_steps), y = double(3*n_cells*n_steps), Frame = double(3*n_cells*n_steps))
     }
     
     #Start of the loop
     
-    for (j in 1:steps) {
-      for(l in 1:n) {
+    for (j in 1:n_steps) {
+      for(l in 1:n_cells) {
         points2 <- bending_move_points(points, cyl_width_A, cyl_length, r,
-                                       n, L, rad)
+                                       n_cells, n_layers, rad)
         
         energytesel2 <- bending_tesellation_energy_N(points2, Am, rec, rad,
-                                           gamma_ad, lambda_ad, omega, n,
-                                           Lay = L, s0)
+                                           gamma, lambda, omega, n_cells,
+                                           n_layers, s0_ratio)
         c <- choice_metropolis(energytesel2-energytesel, beta)
         cond <- c==1
         if(cond){
@@ -276,17 +277,15 @@ library(doParallel)
         }
         gc()
       }
-      for (i in 1:L) {
-        histpts[[i]][(j*3*n+1):(j*3*n+3*n),c(1,2)] <- points[[i]]
-        histpts[[i]][(j*3*n+1):(j*3*n+3*n),3] <- j+1
+      for (i in 1:n_layers) {
+        histpts[[i]][(j*3*n_cells+1):(j*3*n_cells+3*n_cells),c(1,2)] <- points[[i]]
+        histpts[[i]][(j*3*n_cells+1):(j*3*n_cells+3*n_cells),3] <- j+1
       }
       energhist[j+1,c(1,2)] <- c(j,energytesel)
       gc()
     }
     save(histpts, file = paste0("results_", i, ".Rds"))
-    # nu2 <- nu_sq(points = points, rec = rec, n = 100)
+    #nu2 <- nu_sq(points = points, rec = rec, n_cells = 100)
     return(list(points_evolution=histpts,
-                energy_evolution=energhist
-                # nu_2=nu2
-           ))
+                energy_evolution=energhist))
   }
