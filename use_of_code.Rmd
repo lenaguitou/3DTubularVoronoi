@@ -33,9 +33,7 @@ for(dep in dependencies){
 
 
 ## Run simulations
-
 The function that performs Metropolis Algorithm is called "perform_simulations". With the same function we can perform both "static" and "bending" simulations. It returns the results, the parameters used and the algorithm. 
-
 ```{r}
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
@@ -118,7 +116,6 @@ par_results <- foreach(i=c(1,2,3), .combine = rbind, .packages = "deldir") %dopa
   )
 
   do.call(perform_simulations,list(algorithm="static", parameters=params,save_parallel=TRUE))
-
 }
 
 stopCluster(cl)

@@ -32,7 +32,6 @@ funaux2sim<-function(ptsord, n = 100, ps = 100, A0 = 1){
   }
   return(edgear)
 }
-
 funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5, A0 = 1){
   #ps is the number of simulations done
   #First execute the ord function(for results)
@@ -112,7 +111,6 @@ ord <- function(results, iter = 150, n=100, sim=100){
                      y=numeric(n_points*sim), 
                      Frame=numeric(n_points*sim),
                      simulation=numeric(n_points*sim))
-  
   for (i in 0:(sim-1)) {
     ptsord[(i*(n_points*iter)+1):((i+1)*(n_points*iter)),c(1,2,3)]<-results[[i+1]][[1]][c(1,2,3)]
     ptsord[(i*(n_points*iter)+1):((i+1)*(n_points*iter)),4]<-i+1
