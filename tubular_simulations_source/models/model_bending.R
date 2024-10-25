@@ -45,8 +45,8 @@ library(doParallel)
       }
       
       #Replicate the movement in the 2 copies of the cylinder rectangle
-      pt[[i]]$x[c(ind,ind+n,ind+2*n_cells)] <- c(ptinx, ptinx+s*wid, ptinx+2*s*wid)
-      pt[[i]]$y[c(ind,ind+n,ind+2*n_cells)] <- ptiny
+      pt[[i]]$x[c(ind,ind+n_cells,ind+2*n_cells)] <- c(ptinx, ptinx+s*wid, ptinx+2*s*wid)
+      pt[[i]]$y[c(ind,ind+n_cells,ind+2*n_cells)] <- ptiny
       pt[[i]]
     })
     return(pt)
@@ -285,8 +285,7 @@ library(doParallel)
       gc()
     }
     save(histpts, file = paste0("results_", i, ".Rds"))
-    nu2 <- nu_sq(points = points, rec = rec, n_cells = 100)
+    #nu2 <- nu_sq(points = points, rec = rec, n_cells = 100)
     return(list(points_evolution=histpts,
-                energy_evolution=energhist,
-                nu_2=nu2))
+                energy_evolution=energhist))
   }

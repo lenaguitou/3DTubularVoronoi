@@ -33,17 +33,15 @@ for(dep in dependencies){
 
 
 ## Run simulations
-
-The function that performs Metropolis Algorithm is called "perform_simulations". With the same function we can perform both static simulations and with bending. It returns the results, the parameters used and the algorithm. 
-
+The function that performs Metropolis Algorithm is called "perform_simulations". With the same function we can perform both "static" and "bending" simulations. It returns the results, the parameters used and the algorithm. 
 ```{r}
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
 
 params = list(
   seed = 1, # randomness
-  n_steps = 20, # simulation steps
-  n_cells = 50, # number of cells
+  n_steps = 3, # simulation steps
+  n_cells = 100, # number of cells
   n_layers = 3, # numbers of layers
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
@@ -52,11 +50,13 @@ params = list(
   lambda = 0.04, # adhesion 
   # elastic kappa = 1 cause adimentionality
   beta = 100, #constant involved in jumps because of perturbations
-  #omega = 1, #bending constant
   s0_ratio = 1 # characteristic ratio between the actual radius and apical radius
+  #BENDING
+  #,omega = 1 #bending constant
   )
 
 simulation <- perform_simulations(algorithm="static",parameters=params) 
+#simulation <- perform_simulations(algorithm="bending",parameters=params) 
 
 result_alg <- simulation$results
 parameters <- simulation$parameters
@@ -92,7 +92,8 @@ If we want to execute a parallel execution with multiple simulations at the same
 library(foreach)
 library(doParallel)
 
-N_CLUSTERS = 3
+N_SIM = 3 # number of simulations
+N_CLUSTERS = 3 # number of clusters
 cl <- makeCluster(N_CLUSTERS) 
 registerDoParallel(cl)
 
@@ -114,30 +115,27 @@ par_results <- foreach(i=c(1,2,3), .combine = rbind, .packages = "deldir") %dopa
   s0_ratio = 1 # characteristic ratio between the actual radius and apical radius
   )
 
-  simulation <- do.call(perform_simulations,list(algorithm="static", parameters=params))
-  do.call(save_results,list(simulation,save_parallel=TRUE))
-  do.call(perform_simulations,list(algorithm="static", parameters=params))
+  do.call(perform_simulations,list(algorithm="static", parameters=params,save_parallel=TRUE))
 }
 
 stopCluster(cl)
 stopImplicitCluster()
 ```
 
+The following functions work only for parallel simulations using same number of cells and same number of steps. 
 
-```{r,include=FALSE}
+```{r}
 PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
 
-resord <- ord(par_results, iter = parameters$n_steps, n=parameters$n_cells, sim = N_CLUSTERS)
+resord <- ord(par_results, iter = par_results[[1,2]]$n_steps, n=par_results[[1,2]]$n_cells, sim = N_SIM)
 
-resord
+Am <- (2*pi*par_results[[1,2]]$apical_rad*(par_results[[1,2]]$cyl_length))/par_results[[1,2]]$n_cells
+edgearsim<-funaux2simDOUBLE(resord,n=par_results[[1,2]]$n_cells,ps=N_SIM, A0=Am)
 
-edgearsim<-funaux2simDOUBLE(resord,n=parameters$n_cells,ps=N_CLUSTERS)
-edgearsim
+stationarylewis(edgearsim[[1]][1:(par_results[[1,2]]$n_cells*N_SIM),c(1,2,3)])
 
-stationarylewis(edgearsim[[1]][1:(100*simulations),c(1,2,3)])
-
-coef <- adjsim(par_results,nsim=simulations,it=parameters$steps)
+coef <- adjsim(par_results,nsim=N_SIM,it=par_results[[1,2]]$n_steps)
 ```
 
 
@@ -148,7 +146,7 @@ coef <- adjsim(par_results,nsim=simulations,it=parameters$steps)
 To load pre-existing results:
 ```{r}
 # CHANGE file_name WITH THE CORRESPONDING PATH (check the folder results)
-filename <- "results/static/results_simulation_24_10_23.RData"
+filename <- "results/static/results_simulation_24_10_25.RData"
 simulation <- load_results(filename)
 
 result_alg <- simulation$results
@@ -165,6 +163,7 @@ respresent the step of the algorithm. So, if we have executed the code for
 
 ```{r}
 hist_points = result_alg$points_evolution
+hist_points
 hist_energy = result_alg$energy_evolution
 ```
 

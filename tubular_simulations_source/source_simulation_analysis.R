@@ -6,7 +6,7 @@ library(dplyr)
 library(nls.multstart)
 
 
-funaux<-function(p,rec = c(0,15,0,20), n = 100){
+funaux<-function(p,rec = c(0,15,0,20), n = 100, A0 = 1){
   
   #funaux returns a dataframe which first column is the edges of the cell and the
   # second column is the area of that cell
@@ -20,20 +20,19 @@ funaux<-function(p,rec = c(0,15,0,20), n = 100){
   return (celledgearea)
 }
 
-funaux2sim<-function(ptsord, n = 100, ps = 100){
+funaux2sim<-function(ptsord, n = 100, ps = 100, A0 = 1){
   #ps is the number of simulations done
   #First execute the ord function(for results)
   
   edgear<-data.frame(edges=integer(),area=double(),Frame=integer())
   for (i in 1:ps) {
     a<-length(edgear$edges)
-    edgear[(a+1):(a+n),c(1,2)]<-funaux(ptsord[((i-1)*(3*n)+1):(i*3*n),c(1,2)], n)
+    edgear[(a+1):(a+n),c(1,2)]<-funaux(ptsord[((i-1)*(3*n)+1):(i*3*n),c(1,2)], n, A0)
     edgear[(a+1):(a+n),3]<-i
   }
   return(edgear)
 }
-
-funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5){
+funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5, A0 = 1){
   #ps is the number of simulations done
   #First execute the ord function(for results)
   
@@ -43,7 +42,7 @@ funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5){
   edgearA <- data.frame(edges=integer(), area=double(), Frame=integer())
   for (i in 1:ps) {
     a <- length(edgearA$edges)
-    edgearA[(a+1):(a+n),c(1,2)] <- funaux(ptsord[((i-1)*(3*n)+1):(i*3*n),c(1,2)], rec=c(0,15,0,20), n)
+    edgearA[(a+1):(a+n),c(1,2)] <- funaux(ptsord[((i-1)*(3*n)+1):(i*3*n),c(1,2)], rec=c(0,15,0,20), n, A0)
     edgearA[(a+1):(a+n),3] <- i
   }
   
@@ -53,7 +52,7 @@ funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5){
   edgearB <- data.frame(edges=integer(),area=double(),Frame=integer())
   for (i in 1:ps) {
     a <- length(edgearB$edges)
-    edgearB[(a+1):(a+n),c(1,2)] <- funaux(ptsordB[((i-1)*(3*n)+1):(i*3*n),c(1,2)], rec=c(0,15*Ratio,0,20))
+    edgearB[(a+1):(a+n),c(1,2)] <- funaux(ptsordB[((i-1)*(3*n)+1):(i*3*n),c(1,2)], rec=c(0,15*Ratio,0,20), A0)
     edgearB[(a+1):(a+n),3]<-i
   }
   return(list(edgearA,edgearB))
@@ -113,7 +112,7 @@ ord <- function(results, iter = 150, n=100, sim=100){
                      Frame=numeric(n_points*sim),
                      simulation=numeric(n_points*sim))
   for (i in 0:(sim-1)) {
-    ptsord[(i*(n_points*iter)+1):((i+1)*(n_points*iter)),c(1,2,3)]<-results[[i+1]][c(1,2,3)]
+    ptsord[(i*(n_points*iter)+1):((i+1)*(n_points*iter)),c(1,2,3)]<-results[[i+1]][[1]][c(1,2,3)]
     ptsord[(i*(n_points*iter)+1):((i+1)*(n_points*iter)),4]<-i+1
   }
   return(ptsord)
@@ -156,7 +155,7 @@ adjsim<-function(results,nsim=100,it=150){
   
   coefest<-data.frame(a=double(nsim),b=double(nsim),c=double(nsim))
   for (i in 1:nsim) {
-    coefest[i,c(1,2,3)]<-regnls2(results[[i+nsim]])
+    coefest[i,c(1,2,3)]<-regnls2(results[[i,1]]$energy_evolution)
   }
   a<-mean(coefest$a)
   b<-mean(coefest$b)
@@ -167,7 +166,7 @@ adjsim<-function(results,nsim=100,it=150){
     geom_line(colour="#F8766D")+
     xlab("Iteration of the algorithm")+
     ylab("Average energy of the cells")+
-    ggtitle("Average energy relaxation of the system. 100 simulations")
+    ggtitle("Average energy relaxation of the system")
   show(ploten)
   return(c(a,b,c))
 }
