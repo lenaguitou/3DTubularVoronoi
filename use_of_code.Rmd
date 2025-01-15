@@ -40,23 +40,23 @@ source(PATH_MODEL)
 
 params = list(
   seed = 1, # randomness
-  n_steps = 50, # simulation steps
+  n_steps = 30, # simulation steps
   n_cells = 100, # number of cells
-  n_layers = 3, # numbers of layers (min 3)
+  n_layers = 4, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
   cyl_length = 10, # cylinder length
-  gamma = 0.15, #  contractility
+  gamma = 0.15, #3  contractility
   lambda = 0.04, # adhesion 
   # elastic kappa = 1 cause adimentionality
   beta = 100, #constant involved in jumps because of perturbations
   s0_ratio = 1 # characteristic ratio between the actual radius and apical radius
   #BENDING
-  ,omega = 1 #bending constant
+  #,omega = 1 #bending constant
   )
 
-#simulation <- perform_simulations(algorithm="static",parameters=params) 
-simulation <- perform_simulations(algorithm="bending",parameters=params) 
+simulation <- perform_simulations(algorithm="static",parameters=params) 
+#simulation <- perform_simulations(algorithm="bending",parameters=params) 
 
 result_alg <- simulation$results
 parameters <- simulation$parameters
@@ -69,15 +69,15 @@ You can check that the results had been properly saved in your folder.
 
 Now, we select the tessellation that we want to save
 ```{r}
-saveFrame <- 2 # last frame is parameters$n_cells
+saveFrame <- 2#  parameters$n_steps # last frame is parameters$n_steps
 
 library(dplyr) # to do the filtering operation in the dataframe
 dir.create(file.path("saved_tessellations/"))
 PATH_FUNCTIONS = "tubular_simulations_source/save_utils.R"
 source(PATH_FUNCTIONS)
 
-pointsinit <- filter(result_alg[[1]], Frame == saveFrame)
-pts_info = save_tessellation_layers(pointsinit, n = parameters$n_cells, RadiusA =parameters$apical_rad, Ratio = parameters$ratio_rad,
+points <- filter(result_alg[[1]], Frame == saveFrame)
+pts_info = save_tessellation_layers(points, n = parameters$n_cells, RadiusA =parameters$apical_rad, Ratio = parameters$ratio_rad,
                                      cyl_length = parameters$cyl_length, Layers = parameters$n_layers,
                                      filename = paste0("saved_tessellations/saved_tessellation_frame",saveFrame,".csv"))
 ```
@@ -92,18 +92,21 @@ If we want to execute a parallel execution with multiple simulations at the same
 library(foreach)
 library(doParallel)
 
-N_SIM = 3 # number of simulations
-N_CLUSTERS = 3 # number of clusters
+PATH_MODEL = "tubular_simulations_source/model_execution.R"
+source(PATH_MODEL)
+
+N_SIM = 10 # number of simulations
+N_CLUSTERS = 10 # number of clusters
 cl <- makeCluster(N_CLUSTERS) 
 registerDoParallel(cl)
 
-par_results <- foreach(i=c(1,2,3), .combine = rbind, .packages = "deldir") %dopar% {
+par_results <- foreach(i=c(1,2,3,4,5,6,7,8,9,10), .combine = rbind, .packages = "deldir") %dopar% {
   
  params = list(
   seed = i, # randomness
-  n_steps = 20, # simulation steps
-  n_cells = 10, # number of cells
-  n_layers = 2, # numbers of layers
+  n_steps = 30, # simulation steps
+  n_cells = 100, # number of cells
+  n_layers = 3, # numbers of layers
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
   cyl_length = 10, # cylinder length
@@ -120,22 +123,6 @@ par_results <- foreach(i=c(1,2,3), .combine = rbind, .packages = "deldir") %dopa
 
 stopCluster(cl)
 stopImplicitCluster()
-```
-
-The following functions work only for parallel simulations using same number of cells and same number of steps. 
-
-```{r}
-PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
-source(PATH_SIMANALYSIS)
-
-resord <- ord(par_results, iter = par_results[[1,2]]$n_steps, n=par_results[[1,2]]$n_cells, sim = N_SIM)
-
-Am <- (2*pi*par_results[[1,2]]$apical_rad*(par_results[[1,2]]$cyl_length))/par_results[[1,2]]$n_cells
-edgearsim<-funaux2simDOUBLE(resord,n=par_results[[1,2]]$n_cells,ps=N_SIM, A0=Am)
-
-stationarylewis(edgearsim[[1]][1:(par_results[[1,2]]$n_cells*N_SIM),c(1,2,3)])
-
-coef <- adjsim(par_results,nsim=N_SIM,it=par_results[[1,2]]$n_steps)
 ```
 
 
@@ -181,11 +168,13 @@ The function energy_analisis_1sim  takes as argument the points in each iteratio
 PATH_ANALYSIS = "tubular_simulations_source/source_analysis.R"
 source(PATH_ANALYSIS)
 
-enerhist_bytype <- energy_analisis_1sim(hist_points, it = parameters$n_steps, lay = parameters$n_layers, n =parameters$n_cells)
-# knitr::kable(enerhist_bytype[1:3,], format="html")
-plot_energyss(enerhist_bytype)
-```
 
+enerhist_total <- energy_analisis_1sim(hist_points, it = parameters$n_steps, lay = parameters$n_layers, n =parameters$n_cells)
+#knitr::kable(enerhist_total[1:3,], format="html")
+#regnls2(enerhist_total) # 1 simulation
+adjsim(enerhist_total) # average simulations
+plot_energyss(enerhist_total)
+```
 The function energy_analysis_nobend takes as argument the history of points in 1 simulations. Then it returns the initial energy decomposition by layers (separated by energy type) and the final energy decomposition (also by layer). The function also makes the 2 corresponding plots.
 
 ```{r}
@@ -194,8 +183,6 @@ initial_energies <- results_analysis[[1]]
 final_energies <- results_analysis[[2]]
 ```
 
-
-
 The function energy_layers_sim_1 returns 1 dataframe with several columns, corresponding to the layers of the cylinder, and in every column we have the evolution of the energy along the specific layer. This funtion calls internally to the function energy_1_layer, that computes the specific energy of 1 layer in 1 given iteration.
 
 ```{r}
@@ -203,8 +190,38 @@ hist_layers<-energy_layers_sim1(histpts = hist_points, it = parameters$n_steps, 
 #knitr::kable(hist_layers[1:3,], format="html")
 plot_energy_decomp(hist_layers)
 ```
+## Parralel simulations 
+The following functions work only for parallel simulations using same number of cells and same number of steps. 
+
+```{r}
+PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
+source(PATH_SIMANALYSIS)
+
+resord <- ord(par_results, iter = par_results[[1,2]]$n_steps, n=par_results[[1,2]]$n_cells, sim = N_SIM)
+
+Am <- (2*pi*par_results[[1,2]]$apical_rad*(par_results[[1,2]]$cyl_length))/par_results[[1,2]]$n_cells
+edgearsim<-funaux2simDOUBLE(resord,n=par_results[[1,2]]$n_cells,ps=N_SIM, A0=Am)
+
+stationarylewis(edgearsim[[1]][1:(par_results[[1,2]]$n_cells*N_SIM),c(1,2,3)])
+
+coef <- adjsim(par_results,nsim=N_SIM,it=par_results[[1,2]]$n_steps)
+
+```
 
 
+```{r}
+#stationarylewis(edgearsim[[1]][1:10000,c(1,2,3)])
+#stationarylewis(edgearsim[[2]][1:10000,c(1,2,3)])
+coef<-adjsim(par_results,nsim=N_SIM,it=par_results[[1,2]]$n_steps)
 
+xmin<-0
+xmax<-5
+ymin<-0
+ymax<-20
+rec1 <- c(xmin,xmin+3*xmax,ymin,ymax)
+rec2 <- c(xmin,xmin+3*(xmax*2.5),ymin,ymax)
 
-
+scutoids_prep(points$x,points$y,(2.5)*points$x,points$y,rect1= rec1,rect2=rec2)
+scutoids_analysis_oneiter(points$x,points$y,(2.5)*points$x,points$y,rect1= rec1,rect2=rec2)
+df_scutoid <- scutoids_analysis_simulations(result_alg)
+```
