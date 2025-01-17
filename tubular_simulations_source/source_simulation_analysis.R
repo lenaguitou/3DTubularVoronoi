@@ -6,7 +6,9 @@ library(dplyr)
 library(nls.multstart)
 
 
-funaux<-function(p,rec = c(0,15,0,20), n = 100, A0 = 1){
+funaux <-function(p,rec = c(0,15,0,20), n = 100,  cylen,apical_radius = parameters$apical_rad){
+  
+  A0 <- (2*pi*apical_radius*(cylen))/n
   
   #funaux returns a dataframe which first column is the edges of the cell and the
   # second column is the area of that cell
@@ -20,19 +22,23 @@ funaux<-function(p,rec = c(0,15,0,20), n = 100, A0 = 1){
   return (celledgearea)
 }
 
-funaux2sim<-function(ptsord, n = 100, ps = 100, A0 = 1){
+funaux2sim<-function(ptsord, n = 100, ps = 100, cylen,apical_radius){
+  
+  A0 <- (2*pi*apical_radius*(cylen))/n
   #ps is the number of simulations done
   #First execute the ord function(for results)
   
   edgear<-data.frame(edges=integer(),area=double(),Frame=integer())
   for (i in 1:ps) {
     a<-length(edgear$edges)
-    edgear[(a+1):(a+n),c(1,2)]<-funaux(ptsord[((i-1)*(3*n)+1):(i*3*n),c(1,2)], n, A0)
+    edgear[(a+1):(a+n),c(1,2)]<-funaux(ptsord[((i-1)*(3*n)+1):(i*3*n),c(1,2)],n, cylen,apical_radius)
     edgear[(a+1):(a+n),3]<-i
   }
   return(edgear)
 }
-funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5, A0 = 1){
+funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5,  cylen,apical_radius){
+  
+  A0 <- (2*pi*apical_radius*(cylen))/n
   #ps is the number of simulations done
   #First execute the ord function(for results)
   
@@ -42,7 +48,7 @@ funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5, A0 = 1){
   edgearA <- data.frame(edges=integer(), area=double(), Frame=integer())
   for (i in 1:ps) {
     a <- length(edgearA$edges)
-    edgearA[(a+1):(a+n),c(1,2)] <- funaux(ptsord[((i-1)*(3*n)+1):(i*3*n),c(1,2)], rec=c(0,15,0,20), n, A0)
+    edgearA[(a+1):(a+n),c(1,2)] <- funaux(ptsord[((i-1)*(3*n)+1):(i*3*n),c(1,2)], rec=c(0,15,0,20), n, cylen,apical_radius)
     edgearA[(a+1):(a+n),3] <- i
   }
   
@@ -52,7 +58,7 @@ funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5, A0 = 1){
   edgearB <- data.frame(edges=integer(),area=double(),Frame=integer())
   for (i in 1:ps) {
     a <- length(edgearB$edges)
-    edgearB[(a+1):(a+n),c(1,2)] <- funaux(ptsordB[((i-1)*(3*n)+1):(i*3*n),c(1,2)], rec=c(0,15*Ratio,0,20), A0)
+    edgearB[(a+1):(a+n),c(1,2)] <- funaux(ptsordB[((i-1)*(3*n)+1):(i*3*n),c(1,2)], rec=c(0,15*Ratio,0,20),n,cylen,apical_radius)
     edgearB[(a+1):(a+n),3]<-i
   }
   return(list(edgearA,edgearB))
@@ -60,6 +66,7 @@ funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5, A0 = 1){
 
 stationarylewis<-function(edgear){
   #First execute ord function (for results) and funaux2 with the data, then this function makes the plots.
+  
   plotareaedges <- ggplot(edgear, aes(x = edges, y = area, colour = area))+
     geom_point() + xlab("Number of sides") + ylab("Relative area")+
     ggtitle("Relative area of the cells by sides for the system in equilibrium. Basal surface")+
@@ -168,11 +175,20 @@ adjsim<-function(results,nsim=100,it=150){
     ylab("Average energy of the cells")+
     ggtitle("Average energy relaxation of the system")
   show(ploten)
-  return(c(a,b,c))
+  return(paste("Regression function for the energy: a+b*(1-exp(-x/c) with a=",a,"b=",b,"c=",c))
 }
 
+scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy,ratio,ap_rad, n = 100,cylen){
+  
+  #We define the vertices of the plane
+  xmin <- 0
+  xmax <- 2*pi*ap_rad
+  ymin <- 0
+  ymax <- cylen
 
-scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy, rect1, rect2, n = 100){
+  rect1 <- c(xmin,xmin+3*xmax,ymin,ymax)
+  rect2 <- c(xmin,xmin+3*(xmax*ratio),ymin,ymax)
+  
   tslA<-deldir(pointsAx,pointsAy,rw=rect1)
   tilA<-tile.list(tslA)[(n+1):(2*n)]
   tslB<-deldir(pointsBx,pointsBy,rw=rect2)
@@ -199,8 +215,7 @@ scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy, rect
     ylim(3.5,7.5)
   show(scutoidsplot)
   
-  return(countdf)
-}
+  }
 
 wescutoids_percr<-function(histpts, rect1, rect2, n = 100, it=150){
   #Computes the evolution of the percentage of escutoids in every iteration of the algorithm
@@ -248,12 +263,21 @@ scutoids_percr_simulations<-function(results, rect1, rect2, n=100, sim=100, it=1
 }
 
 
-scutoids_prep <- function(pointsAx,pointsAy,pointsBx,pointsBy,rect1,rect2,
-                          n = 100){
+scutoids_prep <- function(pointsAx,pointsAy,pointsBx,pointsBy,ratio,ap_rad, n = 100,cylen){
+
   
   #This function returns a dataframe which counts the number of edges in the 
   # apical and basal surface of each cell, and counts the cells that has the same
   # number of edges in both surfaces.
+  #We define the vertices of the plane
+  xmin <- 0
+  xmax <- 2*pi*ap_rad
+  ymin <- 0
+  ymax <- cylen
+  
+  rect1 <- c(xmin,xmin+3*xmax,ymin,ymax)
+  rect2 <- c(xmin,xmin+3*(xmax*ratio),ymin,ymax)
+  
   
   tslA <- deldir(pointsAx,pointsAy,rw=rect1)
   tilA <- tile.list(tslA)[(n+1):(2*n)]
@@ -282,9 +306,9 @@ scutoids_analysis_stationary <- function(histpts, rect1, rect2, n = 100){
   histdf_avgcount <- histdf_count %>%
     group_by(edgesA,edgesB) %>%
     summarize(avg_count=mean(count))
+    rename(average_count = percentages)
   
-  
-  scutoidsplot<-ggplot(histdf_avgcount, aes(x = edgesA, y = edgesB, label=avg_count))+
+  scutoidsplot<-ggplot(histdf_avgcount, aes(x = edgesA, y = edgesB, label=percentages))+
     geom_count(shape = "square", aes(color= avg_count))+
     xlab("Average of edges on apical surface")+ylab("Average of edges on basal surface")+
     ggtitle("Average polygon class of apical and basal surfaces")+
@@ -298,8 +322,15 @@ scutoids_analysis_stationary <- function(histpts, rect1, rect2, n = 100){
   return(histdf_avgcount)
 }
 
-scutoids_analysis_simulations <- function(results, Ratio = 2.5, rect1 = rec1, rect2 = rec2,
-                                          n = 100, sim = 100, it = 150){
+scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 100, it = 150, cylen,ap_rad){
+  #We define the vertices of the plane
+  xmin <- 0
+  xmax <- 2*pi*ap_rad
+  ymin <- 0
+  ymax <- cylen
+  
+  rect1 <- c(xmin,xmin+3*xmax,ymin,ymax)
+  rect2 <- c(xmin,xmin+3*(xmax*Ratio),ymin,ymax)
   
   #sim is how many simulations we have
   #it is the iteration that we have
@@ -313,11 +344,10 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, rect1 = rec1, re
     #each simulation have a different distribution of sides, so we have to adapt
     
     a <- length(histdf_count[[1]])
-    ptsx <- dplyr::filter(results[[i]], Frame==it)$x
-    ptsy <- dplyr::filter(results[[i]], Frame==it)$y
+    ptsx <- dplyr::filter(results[[i]]$points_evolution, Frame==it)$x
+    ptsy <- dplyr::filter(results[[i]]$points_evolution, Frame==it)$y
     df<-scutoids_prep(ptsx, ptsy,
-                      Ratio*ptsx, ptsy,
-                      rect1,rect2)
+                      Ratio*ptsx, ptsy,Ratio,ap_rad,n,cylen)
     len<-length(df[[1]])
     histdf_count[(a+1):(a+len),c(1,2,3)]<-df
   }
@@ -349,5 +379,5 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, rect1 = rec1, re
   # xlim(min(histdf_avcount$edgesA)-0.5, max(histdf_avcount$edgesA)-0.5)+
   # ylim(min(histdf_avcount$edgesB)-0.5, max(histdf_avcount$edgesB)-0.5)
   show(scutoidsplot)
-  return(histdf_avcount)
+  
 }

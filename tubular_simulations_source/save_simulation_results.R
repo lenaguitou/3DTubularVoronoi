@@ -16,10 +16,10 @@ save_results <- function(simulation,save_parallel=FALSE) {
     if (!dir.exists(paste0("results/parallel/"))) {
       dir.create(paste0("results/parallel/"), recursive = TRUE)
     }
-    filename <- paste0("results/parallel/","/results_simulation_", date, ".RData")
+    filename <- paste0("results/parallel/", "/results_simulation_", date, "_", 1, ".RData")
     
     # verify if file already exists
-    counter <- 1
+    counter <- 2
     while (file.exists(filename)) {
       filename <- paste0("results/parallel/", "/results_simulation_", date, "_", counter, ".RData")
       counter <- counter + 1
