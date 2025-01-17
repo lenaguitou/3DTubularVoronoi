@@ -58,7 +58,7 @@ funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5,  cylen,apical
   edgearB <- data.frame(edges=integer(),area=double(),Frame=integer())
   for (i in 1:ps) {
     a <- length(edgearB$edges)
-    edgearB[(a+1):(a+n),c(1,2)] <- funaux(ptsordB[((i-1)*(3*n)+1):(i*3*n),c(1,2)], rec=c(0,15*Ratio,0,20),n,cylen,apical_radius)
+    edgearB[(a+1):(a+n),c(1,2)] <- funaux(ptsordB[((i-1)*(3*n)+1):(i*3*n),c(1,2)], rec=c(0,15*Ratio,0,20),n,cylen,apical_radius*Ratio)
     edgearB[(a+1):(a+n),3]<-i
   }
   return(list(edgearA,edgearB))
