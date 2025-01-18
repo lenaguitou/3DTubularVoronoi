@@ -42,13 +42,13 @@ params = list(
   seed = 1, # randomness
   n_steps = 100, # simulation steps
   n_cells = 100, # number of cells
-  n_layers = 10, # numbers of layers (min 3)
+  n_layers = 6, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
   cyl_length = 20, # cylinder length
   gamma = 0.15, #3  contractility
   lambda = 0.04, # adhesion 
-  # elastic kappa = 1 cause adimentionality
+  #kappa = 1 cause adimentionality (elasticity)
   beta = 100, #constant involved in jumps because of perturbations
   s0_ratio = 1 # characteristic ratio between the actual radius and apical radius
   #BENDING
@@ -61,8 +61,7 @@ simulation <- perform_simulations(algorithm=choose_algorithm,parameters=params)
 
 end.time <- Sys.time()
 time.taken <- end.time - start.time
-print(paste("Execution Time:", time.taken))
-print(paste("Execution Time:", round(as.numeric(time.taken, units="min"), 2), "mins"))
+print(paste("Execution Time:", round(as.numeric(time.taken, units="mins"), 2), "mins"))
 
 result_alg <- simulation$results
 parameters <- simulation$parameters
@@ -74,7 +73,9 @@ You can check that the results had been properly saved in your folder.
 ## Save Tesselation for 3D plots
 
 Now, we select the tessellation that we want to save. Then, to do the 3D plots, we use the Mathematica file with this input.
-```{r}{r include=FALSE}
+
+```{r} 
+
 saveFrame <-  parameters$n_steps # last frame is parameters$n_steps
 
 library(dplyr) # to do the filtering operation in the dataframe
@@ -147,7 +148,35 @@ knitr::kable(hist_layers[1:3,], format="html")
 plot_energy_decomp(hist_layers)
 ```
 
+### Scutoids
 
+Count number of scutoids. A warning message can appear when data is out of the scope. 
+
+```{r}
+PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
+source(PATH_ANALYSIS)
+
+# Collect data of last frame
+points <- filter(result_alg$points_evolution, Frame == parameters$n_steps)
+
+# Plot scutoids table count
+scutoids_analysis_oneiter(points$x,points$y,(parameters$ratio_rad)*points$x,points$y,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length)
+```
+
+
+```{r}
+# Neighbors
+PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
+source(PATH_ANALYSIS)
+
+# Average number of neighbors 
+edgear <- funaux2simDOUBLE(result_alg$points_evolution,ps=1,n=parameters$n_cells, cylen = parameters$cyl_length,apical_radius = parameters$apical_rad)
+#apical area
+stationarylewisApical(edgear[[1]][1:parameters$n_cells,c(1,2,3)])
+#basal area
+stationarylewisBasal(edgear[[2]][1:parameters$n_cells,c(1,2,3)])
+ 
+```
 
 # Parallel simulations
 
@@ -161,26 +190,26 @@ library(doParallel)
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
 
-N_SIM = 5 # number of simulations
+N_SIM = 10 # number of simulations
 N_CLUSTERS = 20 # number of clusters
 cl <- makeCluster(N_CLUSTERS) 
 registerDoParallel(cl)
 
 start.time <- Sys.time()
 
-par_results <- foreach(i=c(1,2,3,4,5), .combine = rbind, .packages = "deldir") %dopar% {
+par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopar% {
   
  params = list(
   seed = i, # randomness
-  n_steps = 50, # simulation steps
+  n_steps = 100, # simulation steps
   n_cells = 100, # number of cells
-  n_layers = 5, # numbers of layers (min 3)
+  n_layers = 6, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
   cyl_length = 20, # cylinder length
   gamma = 0.15, #3  contractility
   lambda = 0.04, # adhesion 
-  # elastic kappa = 1 cause adimentionality
+  #kappa = 1 cause adimentionality (elasticity)
   beta = 100, #constant involved in jumps because of perturbations
   s0_ratio = 1 # characteristic ratio between the actual radius and apical radius
   #BENDING
@@ -192,13 +221,38 @@ par_results <- foreach(i=c(1,2,3,4,5), .combine = rbind, .packages = "deldir") %
 
 end.time <- Sys.time()
 time.taken <- end.time - start.time
-print(paste("Execution Time:", time.taken))
 print(paste("Execution Time:", round(as.numeric(time.taken, units="mins"), 2), "mins"))
 
 stopCluster(cl)
 stopImplicitCluster()
 
+par_parameters <- par_results[[1,2]]
 ```
+
+## Loading results
+
+To load pre-existing results:
+```{r}
+PATH_MODEL = "tubular_simulations_source/model_execution.R"
+source(PATH_MODEL)
+
+par_results <- NULL # uncomment this if you want to load data (security)
+N_SIM = 10
+
+for(i in 1:N_SIM){
+  filename <- paste0("results/parallel/results_simulation_25_01_18_",i,".RData")
+  
+  # Extract  
+  simulation_i <- load_results(filename)
+  results_i <- simulation_i$results
+  parameters_i <- simulation_i$parameters
+  algorithm_i <- simulation_i$algorithm
+  # Build the array
+  par_results <- rbind(par_results, list(results = results_i, parameters = parameters_i, algorithm = algorithm_i))
+}
+par_parameters <- par_results[[1,2]]
+```
+
 
 ## Analysis parralel simulations
 
@@ -209,7 +263,6 @@ Results are stored in the variable "par_results". This variable has N_SIM elemen
 ```{r}{r include=FALSE}
 # Access information about the simulation 3
 hist_points_sim_3 = par_results[[3,1]]$points_evolution
-parameters_sim_3 = par_results[[3,2]]$parameters
 ```
 
 The following functions work only for parallel simulations using same number of cells and same number of steps. 
@@ -218,37 +271,33 @@ The following functions work only for parallel simulations using same number of 
 PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
 
-par_parameters <- par_results[[1,2]]
-
 # Reorganize all the simulations
 resord <- ord(par_results, iter = par_parameters$n_steps, n=par_parameters$n_cells, sim = N_SIM)
 
 # Average number of neighbors in basal surface
+edgearsim <- funaux2simDOUBLE(resord,n=par_parameters$n_cells,ps=N_SIM,cylen = par_parameters$cyl_length, apical_radius = par_parameters$apical_rad, Ratio = par_parameters$ratio_rad)
 
-Am <- (2*pi*par_parameters$apical_rad*(par_parameters$cyl_length))/par_parameters$n_cells
-edgearsim<-funaux2simDOUBLE(resord,n=par_parameters$n_cells,ps=N_SIM, A0=Am)
-stationarylewis(edgearsim[[1]][1:(par_parameters$n_cells*N_SIM),c(1,2)]) #DOESNT WORK
+# Average number of neighbors in the apical area
+stationarylewisApical(edgearsim[[1]][1:(par_parameters$n_cells*N_SIM),c(1,2,3)])  
+# Average number of neighbors in the basal area
+stationarylewisBasal(edgearsim[[2]][1:(par_parameters$n_cells*N_SIM),c(1,2,3)])  
 
-# I dont know what it is doing and doesnt work
-stationarylewis(edgearsim[[1]][1:10000,c(1,2,3)])
-stationarylewis(edgearsim[[2]][1:10000,c(1,2,3)])
 ```
 
 
 ```{r}
-# Average energy relaxation
-adjsim(par_results,nsim=N_SIM,it=par_results[[1,2]]$n_steps)
+PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
+source(PATH_SIMANALYSIS)
 
-xmin<-0
-xmax<-5
-ymin<-0
-ymax<-20
-rec1 <- c(xmin,xmin+3*xmax,ymin,ymax)
-rec2 <- c(xmin,xmin+3*(xmax*2.5),ymin,ymax)
+# Average energy relaxation and regression6
+adjsim(par_results,nsim=N_SIM,it=par_parameters$n_steps)
+```
+
+```{r}
+PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
+source(PATH_SIMANALYSIS)
 
 # Scutoids table
-#points <- par_results$results[[,1]]$points_evolution
-scutoids_prep(points$x,points$y,(2.5)*points$x,points$y,rect1= rec1,rect2=rec2)
-scutoids_analysis_oneiter(points$x,points$y,(2.5)*points$x,points$y,rect1= rec1,rect2=rec2)
-df_scutoid <- scutoids_analysis_simulations(result_alg)
+scutoids_analysis_simulations(par_results, it = par_parameters$n_steps, sim = N_SIM, n = par_parameters$n_cells,cylen = par_parameters$cyl_length,ap_rad = par_parameters$apical_rad, Ratio = par_parameters$ratio)
+
 ```
