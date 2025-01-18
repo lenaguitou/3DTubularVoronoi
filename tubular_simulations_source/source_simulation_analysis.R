@@ -64,9 +64,9 @@ funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5,  cylen,apical
   return(list(edgearA,edgearB))
 }
 
-stationarylewis<-function(edgear){
+stationarylewisBasal<-function(edgear){
   #First execute ord function (for results) and funaux2 with the data, then this function makes the plots.
-  
+
   plotareaedges <- ggplot(edgear, aes(x = edges, y = area, colour = area))+
     geom_point() + xlab("Number of sides") + ylab("Relative area")+
     ggtitle("Relative area of the cells by sides for the system in equilibrium. Basal surface")+
@@ -105,6 +105,51 @@ stationarylewis<-function(edgear){
     geom_col(colour="#F8766D", fill="#7CAE00", alpha=0.6)+
     xlab("Number of edges")+ylab("Average frequency")+
     ggtitle("Average quantity of sides of the cells for system in equilibrium. Basal surface")+
+    xlim(2,11)
+  show(histedges)
+}
+
+stationarylewisApical<-function(edgear){
+  #First execute ord function (for results) and funaux2 with the data, then this function makes the plots.
+  
+  plotareaedges <- ggplot(edgear, aes(x = edges, y = area, colour = area))+
+    geom_point() + xlab("Number of sides") + ylab("Relative area")+
+    ggtitle("Relative area of the cells by sides for the system in equilibrium. Apical surface")+
+    stat_summary(aes(y = area, group = 1), fun = mean, colour = "#00BFC4", geom = "line", group = 1)
+  show(plotareaedges)
+  
+  mined<-min(edgear$edges)
+  maxed<-max(edgear$edges)
+  quant<-maxed-mined
+  
+  datahist<-data.frame(edges=numeric(),frec=numeric())
+  
+  for (i in min(edgear$Frame):max(edgear$Frame)){
+    for (j in mined:maxed) {
+      dat<-dplyr::filter(edgear, edges == j & Frame == i)
+      pos<-(i-1)*quant+j-mined+1
+      datahist[pos,c(1,2)]<-c(j, length(dat$edges))
+    }
+  }
+  
+  meandat <- data.frame(edges=numeric(), meanfrec=numeric())
+  varcoefdat <- data.frame(edges=numeric(),varcoef=numeric())
+  
+  for (j in mined:maxed) {
+    dat2<-dplyr::filter(datahist, edges==j)
+    pos<-j-mined+1
+    meandat[pos,c(1,2)]<-c(j,mean(dat2$frec))
+    varcoefdat[pos,c(1,2)]<-c(j,var(dat2$frec)/mean(dat2$frec))
+  }
+  
+  print(datahist)
+  print(meandat)
+  print(varcoefdat)
+  
+  histedges<-ggplot(meandat,aes(edges,meanfrec/sum(meanfrec)))+
+    geom_col(colour="#F8766D", fill="#7CAE00", alpha=0.6)+
+    xlab("Number of edges")+ylab("Average frequency")+
+    ggtitle("Average quantity of sides of the cells for system in equilibrium. Apical surface")+
     xlim(2,11)
   show(histedges)
 }
@@ -162,7 +207,7 @@ adjsim<-function(results,nsim=100,it=150){
   
   coefest<-data.frame(a=double(nsim),b=double(nsim),c=double(nsim))
   for (i in 1:nsim) {
-    coefest[i,c(1,2,3)]<-regnls2(results[[i,1]]$energy_evolution)
+    coefest[i,c(1,2,3)]<-regnls2(results[[i,1]]$energy_evolution,n=nsim)
   }
   a<-mean(coefest$a)
   b<-mean(coefest$b)
