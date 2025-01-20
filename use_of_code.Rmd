@@ -1,13 +1,11 @@
 ---
 title: "Metropolis algorithm for N layers."
 output: html_notebook
-
 ---
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
 
-It is recommended to read the user manual before executing. 
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*.
 
+It is recommended to read the user manual before executing.
 
 ```{r include=FALSE}
 dependencies <- c(
@@ -17,7 +15,8 @@ dependencies <- c(
   "ggplot2",
   "plotly",
   "foreach",
-  "doParallel")
+  "doParallel",
+  "viridis")
   #"ggvoronoi",
   #"gganimate")
 
@@ -31,7 +30,9 @@ for(dep in dependencies){
 # Execute 1 simulation
 
 ## Run the simulation
+
 The function that performs Metropolis Algorithm is called "perform_simulations". With the same function we can perform both "static" and "bending" simulations.
+
 ```{r}
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
@@ -68,13 +69,13 @@ parameters <- simulation$parameters
 algorithm <- simulation$algorithm
 ```
 
-You can check that the results had been properly saved in your folder. 
+You can check that the results had been properly saved in your folder.
 
 ## Save Tesselation for 3D plots
 
 Now, we select the tessellation that we want to save. Then, to do the 3D plots, we use the Mathematica file with this input.
 
-```{r} 
+```{r}
 
 saveFrame <-  parameters$n_steps # last frame is parameters$n_steps
 
@@ -92,9 +93,10 @@ pts_info = save_tessellation_layers(points, n = parameters$n_cells, RadiusA =par
 ## Loading results
 
 To load pre-existing results:
+
 ```{r}
 # CHANGE file_name WITH THE CORRESPONDING PATH (check the folder results)
-filename <- "results/static/results_simulation_24_10_25.RData"
+filename <- "results/static/results_simulation_25_01_17_3.RData"
 simulation <- load_results(filename)
 
 result_alg <- simulation$results
@@ -108,11 +110,11 @@ algorithm <- simulation$algorithm
 
 Results are stored in the variable "result_alg". This variable has 2 elements: the history of points locations in every step ("hist_point"), the history of the energy at every step ("hist_energy").
 
-- "hist_points": each row represents a point, the columns "x" and "y" represent the x and y coordinates of the point, and the column "Frame" represents the step of the algorithm. Number of rows = n_steps x n_cells
+-   "hist_points": each row represents a point, the columns "x" and "y" represent the x and y coordinates of the point, and the column "Frame" represents the step of the algorithm. Number of rows = n_steps x n_cells
 
-- "hist_energy" contains simply 2 columns, one indicating the iteration (or step) and other indicating the energy after performing that number of iterations of Metropolis. Number of rows = n_steps.
+-   "hist_energy" contains simply 2 columns, one indicating the iteration (or step) and other indicating the energy after performing that number of iterations of Metropolis. Number of rows = n_steps.
 
-It is necessary to generate this data to perform the following analysis. 
+It is necessary to generate this data to perform the following analysis.
 
 ```{r}
 # Points
@@ -124,7 +126,7 @@ hist_energy = result_alg$energy_evolution
 knitr::kable(hist_energy[1:10,], format="html") 
 ```
 
-### Energy levels plot 
+### Energy levels plot
 
 The function "energy_analisis_1sim" takes as argument the points in each iteration ("hist_points") generated previously and returns the energy shelled by type in each iteration (an extension of the energy history). The 4 columns represent the elastic, contractile, tensile energy and total energy (sum of all). The function "energy_analysis_nobend" takes as argument the history of points and returns the plots of the energies at the initial step and at the final step, depending on the layer.
 
@@ -142,7 +144,7 @@ results_analysis <- energy_analysis_nobend(histpts = hist_points, it = parameter
 initial_energies <- results_analysis[[1]]
 final_energies <- results_analysis[[2]]
 
-# Over time
+# Per layer over time
 hist_layers <- energy_layers_sim1(histpts = hist_points, it = parameters$n_steps, Lay = parameters$n_layers, n = parameters$n_cells) 
 knitr::kable(hist_layers[1:3,], format="html")
 plot_energy_decomp(hist_layers)
@@ -150,19 +152,20 @@ plot_energy_decomp(hist_layers)
 
 ### Scutoids
 
-Count number of scutoids. A warning message can appear when data is out of the scope. 
+Count number of scutoids. A warning message can appear when data is out of the scope.
 
 ```{r}
 PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
 
-# Collect data of last frame
-points <- filter(result_alg$points_evolution, Frame == parameters$n_steps)
-
 # Plot scutoids table count
-scutoids_analysis_oneiter(points$x,points$y,(parameters$ratio_rad)*points$x,points$y,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length)
-```
+frame =  parameters$n_steps
+points <- filter(result_alg$points_evolution, Frame == frame)
+#scutoids_analysis_oneiter(points$x,points$y,(parameters$ratio_rad)*points$x,points$y,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length)
 
+# Scutoids percentage over time
+scutoids_percr(hist_points,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length,it=parameters$n_steps)
+```
 
 ```{r}
 # Neighbors
@@ -180,8 +183,9 @@ stationarylewisBasal(edgear[[2]][1:parameters$n_cells,c(1,2,3)])
 
 # Parallel simulations
 
-## Execution 
-Parallel execution to execute multiple simulations at the same time. Usually, we choose 3 clusters (the default number of cores in ordinary laptops). 
+## Execution
+
+Parallel execution to execute multiple simulations at the same time.
 
 ```{r include=FALSE}
 library(foreach)
@@ -190,8 +194,8 @@ library(doParallel)
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
 
-N_SIM = 10 # number of simulations
-N_CLUSTERS = 20 # number of clusters
+N_SIM = 100 # number of simulations
+N_CLUSTERS <- detectCores() - 1  # Leave one core free for other processes
 cl <- makeCluster(N_CLUSTERS) 
 registerDoParallel(cl)
 
@@ -203,7 +207,7 @@ par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopa
   seed = i, # randomness
   n_steps = 100, # simulation steps
   n_cells = 100, # number of cells
-  n_layers = 6, # numbers of layers (min 3)
+  n_layers = 4, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
   cyl_length = 20, # cylinder length
@@ -232,15 +236,16 @@ par_parameters <- par_results[[1,2]]
 ## Loading results
 
 To load pre-existing results:
+
 ```{r}
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
 
 par_results <- NULL # uncomment this if you want to load data (security)
-N_SIM = 10
+N_SIM = 100
 
 for(i in 1:N_SIM){
-  filename <- paste0("results/parallel/results_simulation_25_01_18_",i,".RData")
+  filename <- paste0("results/parallel/results_simulation_25_01_19_",i,".RData")
   
   # Extract  
   simulation_i <- load_results(filename)
@@ -253,19 +258,15 @@ for(i in 1:N_SIM){
 par_parameters <- par_results[[1,2]]
 ```
 
-
 ## Analysis parralel simulations
 
 ### Structure of the dataframe "par_results"
 
 Results are stored in the variable "par_results". This variable has N_SIM elements of 3 elements each one (results, parameters and algorithm). Each element has "n_cells" rows et "n_steps" columns.
 
-```{r}{r include=FALSE}
-# Access information about the simulation 3
-hist_points_sim_3 = par_results[[3,1]]$points_evolution
-```
+`{r}{r include=FALSE} # Access information about the simulation 3 hist_points_sim_3 = par_results[[3,1]]$points_evolution`
 
-The following functions work only for parallel simulations using same number of cells and same number of steps. 
+The following functions work only for parallel simulations using same number of cells and same number of steps.
 
 ```{r}
 PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
@@ -284,20 +285,36 @@ stationarylewisBasal(edgearsim[[2]][1:(par_parameters$n_cells*N_SIM),c(1,2,3)])
 
 ```
 
+An error message can appear that comes from the instability of the regression function. If it happens the function doesnt work, right click on this chunk, "reload" and run it again.
 
 ```{r}
 PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
 
-# Average energy relaxation and regression6
+# Average energy relaxation and regression
 adjsim(par_results,nsim=N_SIM,it=par_parameters$n_steps)
 ```
 
 ```{r}
+PATH_ANALYSIS = "tubular_simulations_source/source__simulation_analysis.R"
+source(PATH_ANALYSIS)
+
+# Average energies relaxdation over time
+enerhist_average <- energy_analisis_averages(par_results, it = par_parameters$n_steps, lay = par_parameters$n_layers, n = par_parameters$n_cells)
+knitr::kable(enerhist_average[1:10,], format="html") 
+```
+
+The function "scutoids_percr_simulations_par" can be quite long => set to take max 50 simulations. 
+
+```{r}
 PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
 
-# Scutoids table
-scutoids_analysis_simulations(par_results, it = par_parameters$n_steps, sim = N_SIM, n = par_parameters$n_cells,cylen = par_parameters$cyl_length,ap_rad = par_parameters$apical_rad, Ratio = par_parameters$ratio)
+# Scutoids table percentages
+frame <- par_parameters$n_steps
+#scutoids_analysis_simulations(par_results, it = frame , sim = N_SIM, n = par_parameters$n_cells,cylen = par_parameters$cyl_length,ap_rad = par_parameters$apical_rad, Ratio = par_parameters$ratio)
+
+# Scutoids percentage over time (parallel execution)
+scutoids_percr_simulations_par(par_results, n=par_parameters$n_cells, sim=N_SIM, it= frame,ap_rad = par_parameters$apical_rad, cylen=par_parameters$cyl_length,ratio=par_parameters$ratio_rad)
 
 ```
