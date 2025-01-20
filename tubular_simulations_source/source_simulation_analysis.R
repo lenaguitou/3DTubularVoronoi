@@ -6,7 +6,7 @@ library(dplyr)
 library(nls.multstart)
 
 
-funaux <-function(p,rec = c(0,15,0,20), n = 100,  cylen,apical_radius = parameters$apical_rad){
+funaux <-function(p,rec = c(0,15,0,20), n = 100,  cylen,apical_radius){
   
   A0 <- (2*pi*apical_radius*(cylen))/n
   
@@ -248,22 +248,43 @@ scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy,ratio
     group_by(edgesA,edgesB) %>%
     summarize(count=n())
   
+  total_count <- sum(countdf$count)
+  
+  # Convert counts to percentages
+  countdf$percent <- (countdf$count / total_count) * 100
+
+  # Filter to only keep percentages greater  
+  #countdf <- dplyr::filter(countdf, percent >= 1)
+  
   scutoidsplot<-ggplot(countdf, aes(x = edgesA, y = edgesB, label=count))+
-    geom_count(shape = "square", aes(color= count))+
+    geom_count(shape = "square", aes(color= percent,size=10))+
     xlab("Edges on apical surface")+ylab("Edges on basal surface")+
     ggtitle("Polygon class of apical and basal surfaces")+
     guides(colour = "colorbar", size = "none")+
-    scale_size_area(max_size = 30)+
-    geom_label()+
-    scale_fill_gradient(low = "light blue", high = "deepskyblue")+
-    xlim(3.3,7.5)+
-    ylim(3.5,7.5)
+    labs(color = "Percentages")+
+    scale_size_area(max_size = 70)+
+     #geom_label()+
+    #scale_color_gradient(low = "yellow", high = "blue") +
+    scale_color_viridis(option = "D",direction = -1, limits = c(0,30)) +
+    xlim(4,8) +
+    ylim(4,8)
   show(scutoidsplot)
   
   }
 
-wescutoids_percr<-function(histpts, rect1, rect2, n = 100, it=150){
+scutoids_percr <-function(histpts, n = 100, it=150,ratio,ap_rad,cylen,plotShow=TRUE){
+  
+  #We define the vertices of the plane
+  xmin <- 0
+  xmax <- 2*pi*ap_rad
+  ymin <- 0
+  ymax <- cylen
+  
+  rect1 <- c(xmin,xmin+3*xmax,ymin,ymax)
+  rect2 <- c(xmin,xmin+3*(xmax*ratio),ymin,ymax)
+                        
   #Computes the evolution of the percentage of escutoids in every iteration of the algorithm
+
   perc<-data.frame(it=integer(it), perc_sc=double(it))
   for (i in 1:it) {
     pointsAx<-filter(histpts, Frame == i)$x
@@ -278,22 +299,48 @@ wescutoids_percr<-function(histpts, rect1, rect2, n = 100, it=150){
     for (j in 1:length(tilA)) {
       cellsdf[j,c(1,2)]<-c(length(tilA[[j]]$x),length(tilB[[j]]$x))
     }
-    percen<-length(filter(cellsdf, edgesA==edgesB)[[1]])
-    perc[i,c(1,2)]<-c(i,percen)
+    #percen<-length(filter(cellsdf, edgesA==edgesB)[[1]])
+    #perc[i,c(1,2)]<-c(i,percen)
+    
+    # Count the number of matching edges (where edgesA == edgesB)
+    matching_tiles <- length(filter(cellsdf, edgesA == edgesB)[[1]])
+    
+    # Calculate the total number of tiles in this iteration
+    total_tiles <- nrow(cellsdf)
+    
+    # Calculate the percentage of matching tiles
+    perc_sc <- (matching_tiles / total_tiles) * 100
+    
+    # Store the percentage for this iteration
+    perc[i, c(1, 2)] <- c(i, perc_sc)
   }
-  # ploten<-ggplot(perc,aes(x=it,y=perc_sc))+
-  #   geom_line(colour="#F8766D")+
-  #   xlab("Iteration of the algorithm")+
-  #   ylab("Percentage of escutoids")+
-  #   ggtitle("Evolution of the percentage of escutoids of the system")
-  # show(ploten)
+  
+  if(plotShow==TRUE){
+    ploten<-ggplot(perc,aes(x=it,y=perc_sc))+
+      geom_line(colour="#F8766D")+
+      xlab("Iteration of the algorithm")+
+      ylab("Percentage of escutoids")+
+      ggtitle("Evolution of the percentage of escutoids of the system")
+    show(ploten)
+  }
   return(perc)
 }
 
-scutoids_percr_simulations<-function(results, rect1, rect2, n=100, sim=100, it=150){
+  
+
+scutoids_percr_simulations<-function(results, n=100, sim=100, it=150,ap_rad,cylen,ratio){
+  xmin <- 0
+  xmax <- 2*pi*ap_rad
+  ymin <- 0
+  ymax <- cylen
+  
+  rect1 <- c(xmin,xmin+3*xmax,ymin,ymax)
+  rect2 <- c(xmin,xmin+3*(xmax*ratio),ymin,ymax)
+  
+  
   perc<-data.frame(it=1:it, percen=rep(0,it))
   for (j in 1:sim) {
-    percen<-scutoids_percr(results[[j]], rect1, rect2, n, it)$perc_sc
+    percen<-scutoids_percr(results[[j,1]]$points_evolution, n, it,ratio,ap_rad,cylen,plotShow = FALSE)$perc_sc
     perc$percen<-perc$percen + percen
   }
   perc$percen<-perc$percen/sim
@@ -301,10 +348,53 @@ scutoids_percr_simulations<-function(results, rect1, rect2, n=100, sim=100, it=1
     geom_line(colour="#F8766D")+
     xlab("Iteration of the algorithm")+
     ylab("Percentage of escutoids")+
-    ggtitle("Evolution of the average percentage of escutoids. 100 simulations")
+    ggtitle("Evolution of the average percentage of escutoids")
   show(ploten)
   
   return(perc)
+}
+
+scutoids_percr_simulations_par <- function(results, n=100, sim=100, it=150, ap_rad, cylen, ratio) {
+  
+  # Set up parallel backend (adjust the number of cores as necessary)
+  num_cores <- detectCores() - 1  # Leave one core free for other processes
+  cl <- makeCluster(num_cores)
+  registerDoParallel(cl)
+  
+  xmin <- 0
+  xmax <- 2 * pi * ap_rad
+  ymin <- 0
+  ymax <- cylen
+  
+  rect1 <- c(xmin, xmin + 3 * xmax, ymin, ymax)
+  rect2 <- c(xmin, xmin + 3 * (xmax * ratio), ymin, ymax)
+  
+  perc <- data.frame(it = 1:it, percen = rep(0, it))
+  
+  # Use foreach for parallel execution
+  foreach(j = 1:50, .combine = 'cbind', .packages = c('deldir', 'dplyr'), .export = c('scutoids_percr')) %dopar% {
+    
+    # Fetch points for the current simulation
+    percen <- scutoids_percr(results[[j, 1]]$points_evolution, n, it, ratio, ap_rad, cylen, plotShow = FALSE)$perc_sc
+    
+    return(percen)  # Return the perc_sc values for each simulation
+  } -> perc_results
+  # Stop the parallel cluster
+  stopCluster(cl)
+  
+  # Summing the perc_results and averaging over simulations
+  perc$percen <- rowSums(perc_results) / 50
+  
+  # Plotting the results
+  ploten <- ggplot(perc, aes(x = it, y = percen)) +
+    geom_line(colour = "#F8766D") +
+    xlab("Iteration of the algorithm") +
+    ylab("Percentage of escutoids") +
+    ggtitle("Evolution of the average percentage of escutoids")
+  show(ploten)
+  
+  
+  return(perc_results)
 }
 
 
@@ -351,9 +441,8 @@ scutoids_analysis_stationary <- function(histpts, rect1, rect2, n = 100){
   histdf_avgcount <- histdf_count %>%
     group_by(edgesA,edgesB) %>%
     summarize(avg_count=mean(count))
-    rename(average_count = percentages)
   
-  scutoidsplot<-ggplot(histdf_avgcount, aes(x = edgesA, y = edgesB, label=percentages))+
+  scutoidsplot<-ggplot(histdf_avgcount, aes(x = edgesA, y = edgesB, label=avg-count))+
     geom_count(shape = "square", aes(color= avg_count))+
     xlab("Average of edges on apical surface")+ylab("Average of edges on basal surface")+
     ggtitle("Average polygon class of apical and basal surfaces")+
@@ -402,27 +491,176 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 1
   histdf_avcount <- data.frame(edgesA = double(),
                                edgesB = double(),
                                avg_count = double())
+
   for (edA in min(histdf_count$edgesA):max(histdf_count$edgesA)) {
     for (edB in min(histdf_count$edgesB):max(histdf_count$edgesB)) {
       a <- length(histdf_avcount$edgesA)
       histdf_avcount[a+1,c(1,2,3)] <-
-        c(edA, edB, (sum(dplyr::filter(histdf_count, edgesA == edA & edgesB == edB)$count)/100))
+        c(edA, edB, (sum(dplyr::filter(histdf_count, edgesA == edA & edgesB == edB)$count)*100/(sim*100)))
     }
   }
-  histdf_avcount <- dplyr::filter(histdf_avcount, avg_count >= 0.1)
   
-  scutoidsplot<-ggplot(histdf_avcount, aes(x = edgesA, y = edgesB, label=avg_count))+
-    geom_count(shape = "square", aes(color= avg_count))+
+
+  #histdf_avcount <- dplyr::filter(histdf_avcount, avg_count > 1)
+
+
+  scutoidsplot<-ggplot(histdf_avcount, aes(x = edgesA, y = edgesB, label =avg_count))+
+    geom_count(shape = "square", aes(color= avg_count,size=10))+
     xlab("Average of edges on apical surface")+ylab("Average of edges on basal surface")+
     ggtitle("Average polygon class of apical and basal surfaces")+
     guides(colour = "colorbar", size = "none")+
-    scale_size_area(max_size = 30)+
-    geom_label()+
-    scale_fill_gradient(low = "light blue", high = "deepskyblue")+
-    xlim(3.5,8.5)+
-    ylim(3.5,8.5)
+    labs(color = "Percentages")+
+    scale_size_area(max_size = 70)+
+    #geom_label()+
+    #scale_fill_gradient(low = "light blue", high = "deepskyblue")+
+    scale_color_viridis(option = "D",direction = -1, limits = c(0,35)) +
+    xlim(3,9)+
+    ylim(3,9)
   # xlim(min(histdf_avcount$edgesA)-0.5, max(histdf_avcount$edgesA)-0.5)+
   # ylim(min(histdf_avcount$edgesB)-0.5, max(histdf_avcount$edgesB)-0.5)
   show(scutoidsplot)
-  
 }
+
+
+
+
+
+
+
+
+
+# ADDED 
+
+energy_analysis <- function(points){
+  
+  
+  tesener <- data.frame( Layer = seq(1, rad_coef, by = ((rad_coef-1)/(Lay-1))),
+                         Elastic_energy = double(Lay),
+                         Tension_energy = double(Lay),
+                         Contractile_energy = double(Lay),
+                         Bending_energy = double(Lay),
+                         Total_energy=double(Lay))
+  
+  for (i in 1:Lay) {
+    tesel <- deldir(points[[i]]$x,points[[i]]$y,rw=rec[[i]])
+    tilest <- tile.list(tesel)[(n+1):(2*n)]
+    
+    perims <- (tilePerim(tilest)$perimeters)/sqrt(A0)
+    areas <- sapply(tilest,function(x){x$area/A0})
+    
+    elener <- (sum((areas-1)^2)/n)
+    tenener <- sum(lamad*perims)/n
+    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1 )
+    contener <- sum((gam/2)*(perims^2))/n
+    tesener[i,c(2,3,4,6)] <- c(elener/Lay,
+                               tenener/lay,
+                               contener/Lay,
+                               sum((areas-1)^2+(gam/2)*(perims^2)+
+                                     lamad*perims)/(n*Lay))
+    
+  }
+  
+  tesener$Bending_energy[c(1,Lay)]<-0
+  
+  tesener$Bending_energy[2:(Lay-1)] <- sapply(2:(Lay-1), function(i){
+    
+    angles <- sapply(1:n, function(j){
+      ptcentral <- c(points[[i]]$y[j],
+                     rad[[i]]*cos((1/rad[[i]])*points[[i]]$x[j]),
+                     rad[[i]]*sin((1/rad[[i]])*points[[i]]$x[j]))
+      
+      ptinf <- c(points[[i-1]]$y[j],
+                 rad[[i-1]]*cos((1/rad[[i-1]])*points[[i-1]]$x[j]),
+                 rad[[i-1]]*sin((1/rad[[i-1]])*points[[i-1]]$x[j]))
+      
+      ptsup <- c(points[[i+1]]$y[j],
+                 rad[[i+1]]*cos((1/rad[[i+1]])*points[[i+1]]$x[j]),
+                 rad[[i+1]]*sin((1/rad[[i+1]])*points[[i+1]]$x[j]))
+      
+      vec1 <- ptsup - ptcentral
+      vec2 <- ptinf - ptcentral
+      
+      #We use pmin and pmax to avoid errors in the arc-cosine computation
+      v <- pmin(pmax(((vec1%*%vec2)[1,1])/
+                       (norm(vec1,type = "2")*norm(vec2,type = "2")),-1.0),1.0)
+      ang <- acos(v)        
+      return(ang)
+    })
+    
+    return(sum(alpha*((angles-pi)^2))/(Lay*n))
+  })
+  
+  tesener$Total_energy <- tesener$Total_energy+tesener$Bending_energy
+  return(tesener)
+}
+
+energy_analisis_1sim <- function(histpts, it = 150, lay = 10, n =100){
+  histener<-data.frame(it = 1:(it+1), elen = double(it+1), tenen = double(it+1),
+                       conten = double(it+1), toten = double(it+1))
+  #print(head(histpts))
+  for (i in 1:(it+1)) {
+    pts <- filter(histpts, Frame==i)
+    histener[i,c(2,3,4,5)] <- energy_iteration(pts$x,pts$y, n = n, Lay = lay)
+  }
+  return(histener)
+}
+
+
+energy_analisis_averages <- function(results, it = 150, lay = 10, n = 100) {
+  # Number of simulations
+  N_SIM <- nrow(results)
+  
+  # Initialize a data frame to store averaged energy values
+  average_energy <- data.frame(it = 1:(it + 1), elen = double(it + 1), 
+                               tenen = double(it + 1), conten = double(it + 1), 
+                               toten = double(it + 1))
+  
+  # Loop through all simulations
+  for (i in 1:N_SIM) {
+    # Get the historical points from `points_evolution`
+    histpts <- results[[i, 1]]$energy_evolution
+    
+    # Analyze energy for the current simulation
+    histener <- energy_analisis_1sim(histpts, it = it, lay = lay, n = n)
+    
+    # If it's the first simulation, initialize average_energy
+    if (i == 1) {
+      average_energy <- histener
+    } else {
+      # Update averages by summing the energies
+      average_energy[, 2:5] <- average_energy[, 2:5] + histener[, 2:5]
+    }
+  }
+  
+  # Compute the final averages
+  average_energy[, 2:5] <- average_energy[, 2:5] / N_SIM
+  
+  
+  p<-ggplot(average_energy, aes(x = it))+
+    geom_line(aes(y = toten, colour = "Total energy"))+
+    geom_line(aes(y= tenen, colour = "Adhesion"))+
+    geom_line(aes(y = elen, colour = "Elastic"))+
+    geom_line(aes(y = conten, colour = "Contractility"))+
+    # geom_line(aes(x = Layer, y = Bending_energy, colour = "Bending energy"))+
+    labs(title = "Decomposition of system energies",
+         x = "Iteration", y = "Average energy per cell",
+         color = "Energy type") +
+    scale_colour_manual("",
+                        breaks = c("Total energy",
+                                   "Adhesion",
+                                   "Elastic",
+                                   "Contractility"),
+                        # "Bending energy"),
+                        values = c("red",
+                                   "blue",
+                                   "darkgreen",
+                                   "purple"))
+  # "orange",
+  
+  
+  show(p)
+  
+  return(average_energy)
+}
+
+
