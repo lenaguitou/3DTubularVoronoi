@@ -272,17 +272,26 @@ The following functions work only for parallel simulations using same number of 
 PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
 
-# Reorganize all the simulations
+# Reorganize all the simulations by iteration
 resord <- ord(par_results, iter = par_parameters$n_steps, n=par_parameters$n_cells, sim = N_SIM)
 
-# Average number of neighbors in basal surface
+# Average number of neighbors in basal surface per frame
 edgearsim <- funaux2simDOUBLE(resord,n=par_parameters$n_cells,ps=N_SIM,cylen = par_parameters$cyl_length, apical_radius = par_parameters$apical_rad, Ratio = par_parameters$ratio_rad)
 
-# Average number of neighbors in the apical area
-stationarylewisApical(edgearsim[[1]][1:(par_parameters$n_cells*N_SIM),c(1,2,3)])  
+# AVERAGE OVER ALL FRAMES 
+# Average number of neighbors in the apical area 
+#stationarylewisApical(edgearsim[[1]][1:(par_parameters$n_cells*N_SIM),c(1,2,3)])  
 # Average number of neighbors in the basal area
-stationarylewisBasal(edgearsim[[2]][1:(par_parameters$n_cells*N_SIM),c(1,2,3)])  
+#stationarylewisBasal(edgearsim[[2]][1:(par_parameters$n_cells*N_SIM),c(1,2,3)])  
 
+# AVERAGE SELECTED FRAMES 
+selected_frame = par_parameters$n_steps
+# Average number of neighbors in the apical area 
+edgear_filteredA <- dplyr::filter(edgearsim[[1]], Frame == selected_frame)
+stationarylewisApical(edgear_filteredA[1:(par_parameters$n_cells),c(1,2,3)])  
+# Average number of neighbors in the basal area
+edgear_filteredB <- dplyr::filter(edgearsim[[2]], Frame == selected_frame)
+stationarylewisBasal(edgear_filteredB[1:(par_parameters$n_cells),c(1,2,3)]) 
 ```
 
 An error message can appear that comes from the instability of the regression function. If it happens the function doesnt work, right click on this chunk, "reload" and run it again.
@@ -295,13 +304,14 @@ source(PATH_SIMANALYSIS)
 adjsim(par_results,nsim=N_SIM,it=par_parameters$n_steps)
 ```
 
+The function "energy_analisis_averages" can be quite long => set to take max 50 simulations. 
+
 ```{r}
-PATH_ANALYSIS = "tubular_simulations_source/source__simulation_analysis.R"
+PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
 
-# Average energies relaxdation over time
-enerhist_average <- energy_analisis_averages(par_results, it = par_parameters$n_steps, lay = par_parameters$n_layers, n = par_parameters$n_cells)
-knitr::kable(enerhist_average[1:10,], format="html") 
+# Average energies relaxation over time
+enerhist_average <- energy_analisis_averages_par(par_results, it = par_parameters$n_steps, lay = par_parameters$n_layers, n = par_parameters$n_cells,rad_coef = par_parameters$ratio_rad,Radius = par_parameters$apical_rad,cylen = par_parameters$cyl_length,gamma = par_parameters$gamma,lambda=par_parameters$lambda )
 ```
 
 The function "scutoids_percr_simulations_par" can be quite long => set to take max 50 simulations. 
@@ -312,7 +322,7 @@ source(PATH_SIMANALYSIS)
 
 # Scutoids table percentages
 frame <- par_parameters$n_steps
-#scutoids_analysis_simulations(par_results, it = frame , sim = N_SIM, n = par_parameters$n_cells,cylen = par_parameters$cyl_length,ap_rad = par_parameters$apical_rad, Ratio = par_parameters$ratio)
+scutoids_analysis_simulations(par_results, it = frame , sim = N_SIM, n = par_parameters$n_cells,cylen = par_parameters$cyl_length,ap_rad = par_parameters$apical_rad, Ratio = par_parameters$ratio)
 
 # Scutoids percentage over time (parallel execution)
 scutoids_percr_simulations_par(par_results, n=par_parameters$n_cells, sim=N_SIM, it= frame,ap_rad = par_parameters$apical_rad, cylen=par_parameters$cyl_length,ratio=par_parameters$ratio_rad)
