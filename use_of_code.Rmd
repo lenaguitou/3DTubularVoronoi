@@ -40,10 +40,10 @@ source(PATH_MODEL)
 choose_algorithm <- "static"
 
 params = list(
-  seed = 1, # randomness
-  n_steps = 100, # simulation steps
-  n_cells = 100, # number of cells
-  n_layers = 6, # numbers of layers (min 3)
+  seed = 42, # randomness
+  n_steps = 40, # simulation steps
+  n_cells = 50, # number of cells
+  n_layers = 3, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
   cyl_length = 20, # cylinder length
@@ -51,7 +51,7 @@ params = list(
   lambda = 0.04, # adhesion 
   #kappa = 1 cause adimentionality (elasticity)
   beta = 100, #constant involved in jumps because of perturbations
-  s0_ratio = 1 # characteristic ratio between the actual radius and apical radius
+  s0_ratio = 1 # characteristic ratio between the acztual radius and apical radius
   #BENDING
   #,omega = 1 #bending constant
   )
@@ -77,7 +77,7 @@ Now, we select the tessellation that we want to save. Then, to do the 3D plots, 
 
 ```{r}
 
-saveFrame <-  parameters$n_steps # last frame is parameters$n_steps
+saveFrame <- parameters$n_steps # last frame is parameters$n_steps
 
 library(dplyr) # to do the filtering operation in the dataframe
 dir.create(file.path("saved_tessellations/"))
@@ -96,7 +96,7 @@ To load pre-existing results:
 
 ```{r}
 # CHANGE file_name WITH THE CORRESPONDING PATH (check the folder results)
-filename <- "results/static/results_simulation_25_01_17_3.RData"
+filename <- "results/static/results_simulation_25_01_22.RData"
 simulation <- load_results(filename)
 
 result_alg <- simulation$results
@@ -173,7 +173,7 @@ PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
 
 # Average number of neighbors 
-edgear <- funaux2simDOUBLE(result_alg$points_evolution,ps=1,n=parameters$n_cells, cylen = parameters$cyl_length,apical_radius = parameters$apical_rad)
+edgear <- funaux2simDOUBLE(result_alg$points_evolution,ps=1,n=parameters$n_cells, cylen = parameters$cyl_length,apical_radius = parameters$apical_rad,it=parameters$n_steps)
 #apical area
 stationarylewisApical(edgear[[1]][1:parameters$n_cells,c(1,2,3)])
 #basal area
@@ -194,7 +194,7 @@ library(doParallel)
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
 
-N_SIM = 100 # number of simulations
+N_SIM = 10 # number of simulations
 N_CLUSTERS <- detectCores() - 1  # Leave one core free for other processes
 cl <- makeCluster(N_CLUSTERS) 
 registerDoParallel(cl)
@@ -206,8 +206,8 @@ par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopa
  params = list(
   seed = i, # randomness
   n_steps = 100, # simulation steps
-  n_cells = 100, # number of cells
-  n_layers = 4, # numbers of layers (min 3)
+  n_cells = 200, # number of cells
+  n_layers = 10, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
   cyl_length = 20, # cylinder length
@@ -238,11 +238,11 @@ par_parameters <- par_results[[1,2]]
 To load pre-existing results:
 
 ```{r}
-PATH_MODEL = "tubular_simulations_source/model_execution.R"
-source(PATH_MODEL)
+PATH_FUNCTIONS = "tubular_simulations_source/save_simulation_results.R"
+source(PATH_FUNCTIONS)
 
 par_results <- NULL # uncomment this if you want to load data (security)
-N_SIM = 100
+N_SIM = 10
 
 for(i in 1:N_SIM){
   filename <- paste0("results/parallel/results_simulation_25_01_19_",i,".RData")
@@ -276,7 +276,7 @@ source(PATH_SIMANALYSIS)
 resord <- ord(par_results, iter = par_parameters$n_steps, n=par_parameters$n_cells, sim = N_SIM)
 
 # Average number of neighbors in basal surface per frame
-edgearsim <- funaux2simDOUBLE(resord,n=par_parameters$n_cells,ps=N_SIM,cylen = par_parameters$cyl_length, apical_radius = par_parameters$apical_rad, Ratio = par_parameters$ratio_rad)
+edgearsim <- funaux2simDOUBLE(resord,n=par_parameters$n_cells,ps=N_SIM,cylen = par_parameters$cyl_length, apical_radius = par_parameters$apical_rad, Ratio = par_parameters$ratio_rad,it=par_parameters$n_steps)
 
 # AVERAGE OVER ALL FRAMES 
 # Average number of neighbors in the apical area 
@@ -288,10 +288,10 @@ edgearsim <- funaux2simDOUBLE(resord,n=par_parameters$n_cells,ps=N_SIM,cylen = p
 selected_frame = par_parameters$n_steps
 # Average number of neighbors in the apical area 
 edgear_filteredA <- dplyr::filter(edgearsim[[1]], Frame == selected_frame)
-stationarylewisApical(edgear_filteredA[1:(par_parameters$n_cells),c(1,2,3)])  
+stationarylewisApical(edgear_filteredA[1:(par_parameters$n_cells),c(1,2,3)],it = selected_frame)  
 # Average number of neighbors in the basal area
 edgear_filteredB <- dplyr::filter(edgearsim[[2]], Frame == selected_frame)
-stationarylewisBasal(edgear_filteredB[1:(par_parameters$n_cells),c(1,2,3)]) 
+stationarylewisBasal(edgear_filteredB[1:(par_parameters$n_cells),c(1,2,3)],it = selected_frame) 
 ```
 
 An error message can appear that comes from the instability of the regression function. If it happens the function doesnt work, right click on this chunk, "reload" and run it again.
@@ -304,17 +304,17 @@ source(PATH_SIMANALYSIS)
 adjsim(par_results,nsim=N_SIM,it=par_parameters$n_steps)
 ```
 
-The function "energy_analisis_averages" can be quite long => set to take max 50 simulations. 
+The function "energy_analisis_averages" can be quite long that is why it is built in parallel. 
 
 ```{r}
 PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
 
 # Average energies relaxation over time
-enerhist_average <- energy_analisis_averages_par(par_results, it = par_parameters$n_steps, lay = par_parameters$n_layers, n = par_parameters$n_cells,rad_coef = par_parameters$ratio_rad,Radius = par_parameters$apical_rad,cylen = par_parameters$cyl_length,gamma = par_parameters$gamma,lambda=par_parameters$lambda )
+enerhist_average <- energy_analisis_averages_par(par_results, it = par_parameters$n_steps, lay = par_parameters$n_layers, n = par_parameters$n_cells,rad_coef = par_parameters$ratio_rad,Radius = par_parameters$apical_rad,cylen = par_parameters$cyl_length,gamma = par_parameters$gamma,lambda=par_parameters$lambda,s0 = par_parameters$s0_ratio)
 ```
 
-The function "scutoids_percr_simulations_par" can be quite long => set to take max 50 simulations. 
+The function "scutoids_percr_simulations_par" can be quite long that is why it is built in parallel. 
 
 ```{r}
 PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
@@ -325,6 +325,6 @@ frame <- par_parameters$n_steps
 scutoids_analysis_simulations(par_results, it = frame , sim = N_SIM, n = par_parameters$n_cells,cylen = par_parameters$cyl_length,ap_rad = par_parameters$apical_rad, Ratio = par_parameters$ratio)
 
 # Scutoids percentage over time (parallel execution)
-scutoids_percr_simulations_par(par_results, n=par_parameters$n_cells, sim=N_SIM, it= frame,ap_rad = par_parameters$apical_rad, cylen=par_parameters$cyl_length,ratio=par_parameters$ratio_rad)
+#scutoids_percr_simulations_par(par_results, n=par_parameters$n_cells, sim=N_SIM, it= frame,ap_rad = par_parameters$apical_rad, cylen=par_parameters$cyl_length,ratio=par_parameters$ratio_rad)
 
 ```
