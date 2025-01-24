@@ -158,7 +158,7 @@ stationarylewisBasal<-function(edgear,it){
       y = "Normalized Frequency"
     ) +
     scale_x_continuous(limits = c(3, 9), breaks = seq(3, 9, by = 1)) +  # Fine-tuned x-axis
-    scale_y_continuous(labels = scales::percent_format(), expand = expansion(mult = c(0, 0.05))) +  # Y-axis as percentage
+    scale_y_continuous(limits = c(0,0.6),labels = scales::percent_format(), expand = expansion(mult = c(0, 0.05))) +  # Y-axis as percentage
     theme_minimal(base_size = 14) +
     theme(
       plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
@@ -281,7 +281,7 @@ stationarylewisApical<-function(edgear,it){
       y = "Normalized Frequency"
     ) + 
     scale_x_continuous(limits = c(3, 9), breaks = seq(3, 9, by = 1)) +  # Fine-tuned x-axis
-    scale_y_continuous(labels = scales::percent_format(), expand = expansion(mult = c(0, 0.05))) +  # Y-axis as percentage
+    scale_y_continuous(limits = c(0,0.6),labels = scales::percent_format(), expand = expansion(mult = c(0, 0.05))) +  # Y-axis as percentage
     theme_minimal(base_size = 14) +
     theme(
       plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
@@ -552,9 +552,9 @@ scutoids_percr_simulations_par <- function(results, n=100, sim=100, it=150, ap_r
   } -> perc_results
   # Stop the parallel cluster
   stopCluster(cl)
-  
-  # Summing the perc_results and averaging over simulations
-  perc$percen <- rowSums(perc_results) / 50
+
+    # Summing the perc_results and averaging over simulations
+  perc$percen <- colMeans(perc_results)
   
   # Plotting the results
   ploten <- ggplot(perc, aes(x = it, y = percen)) +
@@ -565,8 +565,7 @@ scutoids_percr_simulations_par <- function(results, n=100, sim=100, it=150, ap_r
     ggtitle("Evolution of the average percentage of scutoids")
   show(ploten)
   
-  
-  return(perc_results)
+  return(paste("Average percentage of scutoids: ",mean(perc_results)))
 }
 
 
@@ -692,7 +691,7 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 1
 #   # ylim(min(histdf_avcount$edgesB)-0.5, max(histdf_avcount$edgesB)-0.5)
   
   scutoidsplot <- ggplot(histdf_avcount, aes(x = edgesA, y = edgesB, label = avg_count)) +
-    geom_point(aes(color = avg_count, size = avg_count), shape = 15, size=20) + # Square shape (15), size mapped to avg_count
+    geom_point(aes(color = avg_count, size = avg_count), shape = 15, size=30) + # Square shape (15), size mapped to avg_count
     scale_color_viridis_c(
       option = "D",
       direction = -1,
