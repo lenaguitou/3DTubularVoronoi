@@ -250,25 +250,23 @@ library(doParallel)
     
     #We create the variables to store the results
     
-    energhist <- data.frame(iteration=numeric(n_steps), energy=numeric(n_steps))
+    energhist <- data.frame(Frame=numeric(n_steps), energy=numeric(n_steps))
     energhist[1,c(1,2)] <- c(0,energytesel)
     
     histpts <- vector(mode="list", length = n_layers)
     
     for (i in 1:n_layers) {
       histpts[[i]] <- data.frame(x = double(3*n_cells*n_steps), y = double(3*n_cells*n_steps), Frame = double(3*n_cells*n_steps))
+      histpts[[i]][1:(3*n_cells),c(1,2)] <- pointsinit[[i]]
+      histpts[[i]][1:(3*n_cells),3] <- 1
     }
-    
+
     #Start of the loop
     
     for (j in 1:n_steps) {
       for(l in 1:n_cells) {
-        points2 <- bending_move_points(points, cyl_width_A, cyl_length, r,
-                                       n_cells, n_layers, rad)
-        
-        energytesel2 <- bending_tesellation_energy_N(points2, Am, rec, rad,
-                                           gamma, lambda, omega, n_cells,
-                                           n_layers, s0_ratio)
+        points2 <- bending_move_points(points, wid = cyl_width_A, len = cyl_length, rc = r, n_cells=n_cells, n_layers=n_layers, rad= rad)
+        energytesel2 <- bending_tesellation_energy_N(points2, Am, rec, rad, gamma, lambda,omega,n_cells,n_layers,s0_ratio)
         c <- choice_metropolis(energytesel2-energytesel, beta)
         cond <- c==1
         if(cond){
@@ -284,7 +282,7 @@ library(doParallel)
       energhist[j+1,c(1,2)] <- c(j,energytesel)
       gc()
     }
-    save(histpts, file = paste0("results_", i, ".Rds"))
+    #save(histpts, file = paste0("results_", i, ".Rds"))
     #nu2 <- nu_sq(points = points, rec = rec, n_cells = 100)
     return(list(points_evolution=histpts,
                 energy_evolution=energhist))
