@@ -1,5 +1,5 @@
 
-# Realistic 3D modelling of tubular tissues #
+# 3DTubularVoronoi #
 
 Author: Eloy Tomás Serrano Andrés and Léna Guitou \
 Last update: 02/2025
