@@ -1,9 +1,8 @@
 
 # Realistic 3D modelling of tubular tissues #
 
-Author: Eloy Tomás Serrano Andrés \
-Co-Authors: Léna Guitou \
-Last update: 11/2024
+Author: Eloy Tomás Serrano Andrés and Léna Guitou 
+Last update: 02/2025
 
 Tested on R version 4.3.1., RStudio version 2023.06.1+524. and Mathematica version 12
 
