@@ -31,12 +31,11 @@ for(dep in dependencies){
 # Execute 1 simulation
 
 ## Run the simulation
-The function that performs Metropolis Algorithm is called "perform_simulations". With the same function we can perform both "static" and "bending" simulations.
+The function that performs Metropolis Algorithm is called "perform_simulations". 
+
 ```{r}
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
-
-choose_algorithm <- "static"
 
 params = list(
   seed = 1, # randomness
@@ -57,7 +56,7 @@ params = list(
 
 start.time <- Sys.time()
 
-simulation <- perform_simulations(algorithm=choose_algorithm,parameters=params) 
+simulation <- perform_simulations(algorithm="static",parameters=params) 
 
 end.time <- Sys.time()
 time.taken <- end.time - start.time
