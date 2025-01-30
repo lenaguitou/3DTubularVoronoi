@@ -8,6 +8,31 @@ library(foreach)
 library(doParallel)
 
 
+# rad_coef = parameters$ratio_rad
+# steps = parameters$n_steps
+# Radius = parameters$apical_rad #5/(2*pi) #params$radiusA
+# Radius2 <- rad_coef*Radius
+# cyl_thickness <- Radius2-Radius
+# cyl_length = parameters$cyl_length
+# cyl_width = Radius*(2*pi)
+# rec <- list()
+# rad <- list()
+# L = parameters$n_layers
+# n = parameters$n_cells
+# A0 <- ((Radius2+Radius)*pi*cyl_length)/n
+# xmin <- 0
+# ymin <- 0
+# xmax <- cyl_width
+# ymax <- cyl_length
+# for(k in 1:L){
+#   rad[[k]]<- Radius+(k-1)*(cyl_thickness/(L-1)) #the radius of the layer k
+#   rec[[k]]<-c(xmin,xmin+3*(2*pi*rad[[k]]),ymin,ymax)
+# }
+# lamad = parameters$lambda
+# gamad = parameters$gamma
+
+
+
 #FUNCTIONS INVOLVED IN THE ALGORITHM
 
 #to see the functions in detail, see the N_cylinder_algorithm.R script
@@ -134,7 +159,7 @@ nu_sq <- function(points, rec, RadB= 2.5*5/(2*pi) , n_cells=100){
 metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
                        apical_rad = 5/(2*pi), ratio_rad = 2.5, cyl_length = 20,
                        gamma = 0.15, lambda = 0.04, beta = 100, s0_ratio=1){
-  
+
   
   #We define our variables
   
@@ -171,8 +196,9 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
   
   points <- data.frame(x=x,y=y)
   pointsinit <- points
-  energytesel <- tesellation_energy_N(points$x, points$y, Am, rec , rad,
-                                      gamma, lambda, n_cells, n_layers, s0_ratio)
+  energytesel <- tesellation_energy_N(points$x, points$y, A0 = Am, rec , rad,
+                                      gamad = gamma, lamad = lambda, n_cells, Layer = n_layers, s0_ratio = s0_ratio)
+  
   energyinit <- energytesel
   
   #We create the variables to store the results
@@ -189,12 +215,10 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
   #Start of the loop
   for (j in 1:n_steps) {
     for(k in 1:n_cells) {
-      points2<-move_points(points,cyl_width_A,cyl_length,r,n_cells)
-      energytesel2<-tesellation_energy_N(points2$x, points2$y, Am,
-                                         rec, rad, 
-                                         gamma, lambda,
-                                         n_cells, n_layers, s0_ratio)
-      c<-choice_metropolis(energytesel2-energytesel,beta)
+      points2<-move_points(points,wid = cyl_width_A,len = cyl_length,rc = r,n_cells = n_cells)  
+      energytesel2<-tesellation_energy_N(points2$x, points2$y, A0 = Am, rec , rad,
+                                         gamad = gamma, lamad = lambda, n_cells, Layer = n_layers, s0_ratio = s0_ratio)
+      c<-choice_metropolis(energytesel2-energytesel,beta) 
       cond <- c==1
       if(cond){
         points<-points2
