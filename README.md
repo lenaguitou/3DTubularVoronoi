@@ -13,8 +13,3 @@ The code had been developped in R and the vizualization tool with Mathematica. T
 
 ``` sudo apt-get install gdal-bin proj-bin libgdal-dev libproj-dev ```
 
-
-## Code ##
-
-The main code is the R script *use_of_code.Rmd*. The source codes are in the folder *tubular_simulations_source* folder. You normally don't have to modify these files. If you do, please be sure of your modifications. 
-
