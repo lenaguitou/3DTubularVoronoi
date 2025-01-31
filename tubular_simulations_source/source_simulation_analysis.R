@@ -135,9 +135,9 @@ stationarylewisBasal<-function(edgear,it){
     varcoefdat[pos,c(1,2)]<-c(j,var(dat2$frec)/mean(dat2$frec))
   }
   
-  print(datahist)
-  print(meandat)
-  print(varcoefdat)
+  #print(datahist)
+  #print(meandat)
+  #print(varcoefdat)
   
   # histedges<-ggplot(meandat,aes(edges,meanfrec/sum(meanfrec)))+
   #   geom_col(colour="#F8766D", fill="#7CAE00", alpha=0.6)+
@@ -195,8 +195,8 @@ stationarylewisBasal<-function(edgear,it){
   )
   
   # Confirmation
-  cat("Plot saved as:", output_file1)
-  cat("Plot saved as:", output_file2)
+  print(paste0("Plot saved:", output_file1))
+  print(paste0("Plot saved:", output_file2))
   
 }
 
@@ -258,9 +258,9 @@ stationarylewisApical<-function(edgear,it){
     varcoefdat[pos,c(1,2)]<-c(j,var(dat2$frec)/mean(dat2$frec))
   }
   
-  print(datahist)
-  print(meandat)
-  print(varcoefdat)
+  #print(datahist)
+  #print(meandat)
+  #print(varcoefdat)
   
   # histedges<-ggplot(meandat,aes(edges,meanfrec/sum(meanfrec)))+
   #   geom_col(colour="#F8766D", fill="#7CAE00", alpha=0.6)+
@@ -319,8 +319,8 @@ stationarylewisApical<-function(edgear,it){
   )
   
   # Confirmation
-  cat("Plot saved as:", output_file1)
-  cat("Plot saved as:", output_file2)
+  print(paste0("Plot saved:", output_file1))
+  print(paste0("Plot saved:", output_file2))
   
 }
 
@@ -416,7 +416,7 @@ scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy,ratio
   }
   countdf<- cellsdf %>%
     group_by(edgesA,edgesB) %>%
-    summarize(count=n())
+    summarize(count=n(), .groups="drop")
   
   total_count <- sum(countdf$count)
   
@@ -455,10 +455,10 @@ scutoids_percr <-function(histpts, n = 100, it=150,ratio,ap_rad,cylen,plotShow=T
                         
   #Computes the evolution of the percentage of escutoids in every iteration of the algorithm
 
-  perc<-data.frame(it=integer(it), perc_sc=double(it))
-  for (i in 1:it) {
-    pointsAx<-filter(histpts, Frame == i)$x
-    pointsAy<-filter(histpts, Frame == i)$y
+  perc<-data.frame(Iteration=integer(it+1), perc_sc=double(it+1))
+  for (i in 1:(it+1)) {
+    pointsAx<-filter(histpts, Iteration == i-1)$x
+    pointsAy<-filter(histpts, Iteration == i-1)$y
     pointsBx <- pointsAx*2.5
     pointsBy <- pointsAy*2.5
     tslA<-deldir(pointsAx,pointsAy,rw=rect1)
@@ -482,11 +482,11 @@ scutoids_percr <-function(histpts, n = 100, it=150,ratio,ap_rad,cylen,plotShow=T
     perc_sc <- 100-(matching_tiles / total_tiles) * 100
     
     # Store the percentage for this iteration
-    perc[i, c(1, 2)] <- c(i, perc_sc)
+    perc[i, c(1, 2)] <- c(i-1, perc_sc)
   }
   
   if(plotShow==TRUE){
-    ploten<-ggplot(perc,aes(x=it,y=perc_sc))+
+    ploten<-ggplot(perc,aes(x=Iteration,y=perc_sc))+
       geom_line(colour="#F8766D")+
       xlab("Iteration of the algorithm")+
       ylab("Percentage of scutoids")+
@@ -494,7 +494,7 @@ scutoids_percr <-function(histpts, n = 100, it=150,ratio,ap_rad,cylen,plotShow=T
       ggtitle("Evolution of the percentage of scutoids of the system")
     show(ploten)
   }
-  return(perc)
+  #return(perc)
 }
 
   
@@ -540,7 +540,7 @@ scutoids_percr_simulations_par <- function(results, n=100, sim=100, it=150, ap_r
   rect1 <- c(xmin, xmin + 3 * xmax, ymin, ymax)
   rect2 <- c(xmin, xmin + 3 * (xmax * ratio), ymin, ymax)
   
-  perc <- data.frame(it = 1:it, percen = rep(0, it))
+  perc <- data.frame(it = 1:(it+1), percen = rep(0, it))
   
   # Use foreach for parallel execution
   foreach(j = 1:sim, .combine = 'rbind', .packages = c('deldir', 'dplyr'), .export = c('scutoids_percr')) %dopar% {

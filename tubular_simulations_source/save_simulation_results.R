@@ -49,6 +49,8 @@ save_results <- function(simulation,save_parallel=FALSE) {
     counter <- counter + 1
   }
   
+  print(paste0("Results saved successfully in path: ", filename))
+  
   # Save
   saveRDS(simulation, file = filename)
 }
@@ -57,6 +59,7 @@ load_results <- function(filename) {
   # FUNCTION TO RECOVER THE SIMULATION RESULTS
   # It recovers the simulation saved with the previous function save_results
   recovered_simulation <- readRDS(filename)
+  print(paste0("Results loaded successfully from path: ", filename))
   return(recovered_simulation)
 }
 

@@ -52,7 +52,7 @@ save_tessellation_layers <- function(pts,
     gc()
     rm(tiles,tes)
   }
-  
+  print(paste0("Results saved successfully in path: ", filename))
   write.table(df, file = filename, sep = ",", row.names = FALSE)
   return(df)
 }

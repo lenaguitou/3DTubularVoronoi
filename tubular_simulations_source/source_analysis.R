@@ -20,7 +20,10 @@ rec <- list()
 rad <- list()
 L = parameters$n_layers
 n = parameters$n_cells
-A0 <- ((Radius2+Radius)*pi*cyl_length)/n
+#A0 <- ((Radius2+Radius)*pi*cyl_length)/n
+
+A0 <- (2*pi*Radius*(cyl_length))/n
+
 xmin <- 0
 ymin <- 0
 xmax <- cyl_width
@@ -96,6 +99,9 @@ energy_analysis <- function(points){
   return(tesener)
 }
 
+
+
+
 energy_analysis_nobend <- function(histpts, it=150, n=100, Lay=10){
   
   tesener <- data.frame( Layer = seq(1, rad_coef, by = ((rad_coef-1)/(Lay-1))),
@@ -109,8 +115,8 @@ energy_analysis_nobend <- function(histpts, it=150, n=100, Lay=10){
                           Contractile_energy = double(Lay),
                           Total_energy=double(Lay))
   
-  points <- filter(histpts, Frame == 1)
-  pointslast <- filter(histpts, Frame == it)
+  points <- filter(histpts,Iteration == 0)
+  pointslast <- filter(histpts, Iteration == it)
   
   for (i in 1:Lay) {
     tesel <- deldir(points$x*(rad[[i]]/rad[[1]]),points$y,rw=rec[[i]])
@@ -123,10 +129,10 @@ energy_analysis_nobend <- function(histpts, it=150, n=100, Lay=10){
     tenener <- sum(lamad*perims)/n
     gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1 )
     contener <- sum((gam/2)*(perims^2))/n
-    tesener[i,c(2,3,4,5)] <- c(elener/(Lay/n),
-                               tenener/(Lay/n),
-                               contener/(Lay/n),
-                               (elener+tenener+contener)/(Lay/n))
+    tesener[i,c(2,3,4,5)] <- c(elener/(Lay),
+                               tenener/(Lay),
+                               contener/(Lay),
+                               (elener+tenener+contener)/(Lay))
     
     tesellast <- deldir(pointslast$x*(rad[[i]]/rad[[1]]),pointslast$y,rw=rec[[i]])
     tilestlast <- tile.list(tesellast)[(n+1):(2*n)]
@@ -138,10 +144,10 @@ energy_analysis_nobend <- function(histpts, it=150, n=100, Lay=10){
     tenenerl <- sum(lamad*perimsl)/n
     gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1 )
     contenerl <- sum((gam/2)*(perimsl^2))/n
-    tesener2[i,c(2,3,4,5)] <- c(elenerl/(Lay/n),
-                                tenenerl/(Lay/n),
-                                contenerl/(Lay/n),
-                                (elenerl+tenenerl+contenerl)/(Lay/n))
+    tesener2[i,c(2,3,4,5)] <- c(elenerl/(Lay),
+                                tenenerl/(Lay),
+                                contenerl/(Lay),
+                                (elenerl+tenenerl+contenerl)/(Lay))
   }
   
   #tesener_long <- tesener %>%
@@ -182,8 +188,8 @@ energy_analysis_nobend <- function(histpts, it=150, n=100, Lay=10){
         "Contractility" = "purple"    # Purple for Contractility
       )
     ) +
-    labs(title = paste0("Energy before ", it, " iterations of the algorithm"),
-         x = "Layer ratio (R/Ra)", y = "Average energy of the cell",
+    labs(title = paste0("Average energy per cell before ", it, " iterations of the algorithm"),
+         x = "Layer ratio (R/Ra)", y = "Average energy per cell",
          color = "Energy type")
   show(p)
   
@@ -225,8 +231,8 @@ energy_analysis_nobend <- function(histpts, it=150, n=100, Lay=10){
         "Contractility" = "purple"    # Purple for Contractility
       )
     ) +
-    labs(title = paste0("Energy after ", it, " iterations of the algorithm"),
-         x = "Layer ratio (R/Ra)", y = "Average energy of the cell",
+    labs(title = paste0("Average energy per cell after ", it, " iterations of the algorithm"),
+         x = "Layer ratio (R/Ra)", y = "Average energy per cell",
          color = "Energy type")
   show(p2)
   
@@ -259,7 +265,7 @@ energy_iteration <- function(pointsx, pointsy, n=100, Lay = 10){
     
     elener <- (sum((areas-1)^2)/n)
     tenener <- sum(lamad*perims)/n
-    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1 )
+    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1)
     contener <- sum((gam/2)*(perims^2))/n
     elasticener <- elasticener+elener
     tensionener <- tensionener+tenener
@@ -274,27 +280,79 @@ energy_iteration <- function(pointsx, pointsy, n=100, Lay = 10){
   return(c(elasticener,tensionener,contractilener,totalener))
 }
 
-energy_analisis_1sim <- function(histpts, it = 150, lay = 10, n =100){
-  histener<-data.frame(it = 1:(it+1), elen = double(it+1), tenen = double(it+1),
+
+energy_iteration_total <- function(pointsx, pointsy, n=100, Lay = 10){
+  
+  tesener <- data.frame( Layer = seq(1, rad_coef, by = ((rad_coef-1)/(Lay-1))),
+                         Elastic_energy = double(Lay),
+                         Tension_energy = double(Lay),
+                         Contractile_energy = double(Lay),
+                         Bending_energy = double(Lay),
+                         Total_energy=double(Lay))
+  elasticener<-0
+  tensionener<-0
+  contractilener<-0
+  totalener<-0
+  
+  for (i in 1:Lay) {
+    tesel <- deldir(pointsx*(rad[[i]]/rad[[1]]),pointsy,rw=rec[[i]])
+    tilest <- tile.list(tesel)[(n+1):(2*n)]
+    
+    perims <- (tilePerim(tilest)$perimeters)/sqrt(A0)
+    areas <- sapply(tilest,function(x){x$area/A0})
+    
+    elener <- (sum((areas-1)^2))
+    tenener <- sum(lamad*perims)
+    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1)
+    contener <- sum((gam/2)*(perims^2))
+    elasticener <- elasticener+elener
+    tensionener <- tensionener+tenener
+    contractilener <- contractilener+contener
+    totalener<- totalener+elener+tenener+contener
+  }
+  elasticener <- elasticener/Lay
+  tensionener <- tensionener/Lay
+  contractilener <- contractilener/Lay
+  totalener <- totalener/Lay
+  
+  return(c(elasticener,tensionener,contractilener,totalener))
+}
+
+
+energy_analisis_1sim <- function(histpts, it = 150, lay = 10, n =100,total=FALSE){
+  
+  histener<-data.frame(Iteration = 0:it, elen = double(it+1), tenen = double(it+1),
                        conten = double(it+1), toten = double(it+1))
   #print(head(histpts))
-  for (i in 1:(it+1)) {
-    pts <- filter(histpts, Frame==i)
-    histener[i,c(2,3,4,5)] <- energy_iteration(pts$x,pts$y, n = n, Lay = lay)
-  }
+  
+  if(total==FALSE){
+    for (i in 1:(it+1)) {
+       pts <- filter(histpts, Iteration==(i-1))
+       histener[i,c(2,3,4,5)] <- energy_iteration(pts$x,pts$y, n = n, Lay = lay)
+    }}
+  else{
+    for (i in 1:(it+1)) {
+      pts <- filter(histpts, Iteration==(i-1))
+      histener[i,c(2,3,4,5)] <- energy_iteration_total(pts$x,pts$y, n = n, Lay = lay)
+    }
+  }  
   return(histener)
 }
 
-plot_energyss<-function(enerhist){
+plot_energyss<-function(enerhist,total=FALSE){
   
-  p<-ggplot(enerhist, aes(x = it))+
+  if(total==FALSE){
+  string <- "Average energy per cell"}
+  else{string <- "Total energy"}
+  
+  p<-ggplot(enerhist, aes(x = Iteration))+
     geom_line(aes(y = toten, colour = "Total energy"))+
     geom_line(aes(y= tenen, colour = "Adhesion"))+
     geom_line(aes(y = elen, colour = "Elastic"))+
     geom_line(aes(y = conten, colour = "Contractility"))+
     # geom_line(aes(x = Layer, y = Bending_energy, colour = "Bending energy"))+
-    labs(title = "Decomposition of system energies",
-         x = "Iteration", y = "Average energy per cell",
+    labs(title =  string,
+         x = "Iteration", y = string,
          color = "Energy type") +
     scale_colour_manual("",
                         breaks = c("Total energy",
@@ -312,18 +370,18 @@ plot_energyss<-function(enerhist){
   show(p)
 }
 
-energy_layers_sim1 <- function(histpts, it = 150, Lay = 10, n = 100, rect = rec) {
+energy_layers_sim1 <- function(histpts, it = 150, Lay = 10, n = 100) {
   
-  tesener <- data.frame(iter = 1:(it + 1))
+  tesener <- data.frame(Iteration = 1:(it + 1))
   
   for (i in 1:(it + 1)) {
-    pts <- filter(histpts, Frame == i)
+    pts <- filter(histpts,Iteration == i-1)
     ener <- rep(0, Lay)
     
     layers_energy <- seq(1, Lay, by = 1)
     
     for (j in layers_energy) {
-      ener[j] <- energy_1_layer(pts$x * (rad[[j]] / rad[[1]]), pts$y, rect[[j]],
+      ener[j] <- energy_1_layer(pts$x * (rad[[j]] / rad[[1]]), pts$y, rec[[j]],
                                 i = j, Lay = Lay, n = n)
     }
     
@@ -354,9 +412,9 @@ energy_1_layer <- function(pointsx, pointsy, rec, i, Lay =10, n=100){
 plot_energy_decomp <- function(layers_hist) {
   df_largo <- pivot_longer(layers_hist, cols = starts_with("Layer "), names_to = "variable", values_to = "valor")
   
-  ggplot(df_largo, aes(x = iter, y = valor, color = variable)) +
+  ggplot(df_largo, aes(x = Iteration, y = valor, color = variable)) +
     geom_line() +
-    labs(title="Energy relaxation by layer",x = "Iteration", y = "Total Energy", color = "Layer")
+    labs(title="Average energy per cell in each layer",x = "Iteration", y = "Total energy per cell", color = "Layer")
 }
 
 
