@@ -76,7 +76,7 @@ hist_energy = result_alg$energy_evolution
 
 ## Loading results
 
-Load previous results. Edit *fileName*.
+Load previous results. Edit *fileName*. ATTENTION: the dataframe *simulation* might be overwritten.
 
 ```{r}
 fileName <- "results/static/results_simulation_25_01_31.RData"
@@ -179,8 +179,8 @@ start.time <- Sys.time()
 par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopar% {
  params = list(
   seed = i, # randomness
-  n_steps = 70, # simulation steps
-  n_cells = 100, # number of cells
+  n_steps = 6, # simulation steps
+  n_cells = 40, # number of cells
   n_layers = 6, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
@@ -204,10 +204,10 @@ par_parameters <- par_results[[1,2]]
 
 ## Loading results
 
-Load pre-existing results. Edit the file name and the number *N_SIM* of simulations to import.
+Load pre-existing results. Edit the file name and the number *N_SIM* of simulations to import. ATTENTION: the dataframe *par_results* might be overwritten.
 
 ```{r}
-fileName <- "results/parallel/results_simulation_25_01_19_"
+fileName <- "results/parallel/results_simulation_25_01_31_"
 N_SIM = 10 
 
 PATH_FUNCTIONS = "tubular_simulations_source/save_simulation_results.R"
@@ -224,6 +224,24 @@ for(i in 1:N_SIM){
   par_results <- rbind(par_results, list(results = results_i, parameters = parameters_i, algorithm = algorithm_i))
 }
 par_parameters <- par_results[[1,2]]
+```
+
+## Tube visualization
+
+Save the tessellation of a selected iteration and simulation. Edit *saveIteration* and *saveSimulation* The first iteration is 0 and the last one is *par_parameters\$n_steps*.
+
+```{r}
+saveIteration <- par_parameters$n_steps 
+saveSimulation <- 2 
+
+library(dplyr) # to do the filtering operation in the dataframe
+dir.create(file.path("saved_tessellations/"), showWarnings = FALSE)
+PATH_FUNCTIONS = "tubular_simulations_source/save_utils.R"
+source(PATH_FUNCTIONS)
+points <- filter(par_results[[saveSimulation]]$points_evolution, Iteration == saveIteration)
+pts_info = save_tessellation_layers(points, n = par_parameters$n_cells, RadiusA = par_parameters$apical_rad, Ratio = par_parameters$ratio_rad,
+                                     cyl_length = parameters$cyl_length, Layers = parameters$n_layers,
+                                     filename = paste0("saved_tessellations/saved_tessellation_iteration_",saveIteration,".csv"))
 ```
 
 ## Data analysis - Parallel
@@ -253,7 +271,7 @@ edgearsim <- funaux2simDOUBLE(resord,n=par_parameters$n_cells,ps=N_SIM,cylen = p
 #stationarylewisBasal(edgearsim[[2]][1:(par_parameters$n_cells*N_SIM),c(1,2,3)])  
 
 # AVERAGE SELECTED FRAMES 
-selected_frame =  35# par_parameters$n_steps
+selected_frame =  par_parameters$n_steps
 # Average number of neighbors in the apical area 
 edgear_filteredA <- dplyr::filter(edgearsim[[1]], Frame == selected_frame)
 stationarylewisApical(edgear_filteredA[1:(par_parameters$n_cells),c(1,2,3)],it = selected_frame)  
@@ -289,25 +307,10 @@ PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
 
 # Scutoids table percentages
-frame <- 35 # par_parameters$n_steps
+frame <-  par_parameters$n_steps
 scutoids_analysis_simulations(par_results, it = frame , sim = N_SIM, n = par_parameters$n_cells,cylen = par_parameters$cyl_length,ap_rad = par_parameters$apical_rad, Ratio = par_parameters$ratio)
 
 # Scutoids percentage over time (parallel execution)
 scutoids_percr_simulations_par(par_results, n=par_parameters$n_cells, sim=N_SIM, it=  par_parameters$n_steps,ap_rad = par_parameters$apical_rad, cylen=par_parameters$cyl_length,ratio=par_parameters$ratio_rad)
 
-```
-
-```{r}
-
-saveFrame <- par_parameters$n_steps # last frame is parameters$n_steps
-
-library(dplyr) # to do the filtering operation in the dataframe
-dir.create(file.path("saved_tessellations/"))
-PATH_FUNCTIONS = "tubular_simulations_source/save_utils.R"
-source(PATH_FUNCTIONS)
-
-points <- filter(par_results[[1]]$points_evolution, Frame == saveFrame)
-pts_info = save_tessellation_layers(points, n = par_parameters$n_cells, RadiusA = par_parameters$apical_rad, Ratio = par_parameters$ratio_rad,
-                                     cyl_length = parameters$cyl_length, Layers = parameters$n_layers,
-                                     filename = paste0("saved_tessellations/saved_tessellation_frame",saveFrame,".csv"))
 ```
