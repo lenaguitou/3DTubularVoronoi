@@ -14,9 +14,7 @@ The code had been developped in R and the vizualization tool with Mathematica. T
 ``` sudo apt-get install gdal-bin proj-bin libgdal-dev libproj-dev ```
 
 
-## Execution ##
+## Code ##
 
-The main code is the R script *use_of_code.Rmd*. This file is to execute the simulations and save data (do not forget to modify the ```PATH_PROJECT```).  
-
-In *tubular_simulations_source* folder, there are the codes where the cylinders and analysis processes are implemented. You normally don't have to modify these files. If you do, please be sure of your modifications. 
+The main code is the R script *use_of_code.Rmd*. This file is to execute the simulations and save data (do not forget to modify the ```PATH_PROJECT```). The source codes are in the folder *tubular_simulations_source* folder. You normally don't have to modify these files. If you do, please be sure of your modifications. 
 
