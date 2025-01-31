@@ -37,10 +37,10 @@ Parameters for single simulation. Edit the values.
 
 ```{r}
 params = list(
-  seed = 42, # randomness
-  n_steps = 5, # simulation steps
-  n_cells = 40, # number of cells
-  n_layers = 3, # numbers of layers (min 3)
+  seed = 1, # randomness
+  n_steps = 50, # simulation steps
+  n_cells = 100, # number of cells
+  n_layers = 10, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
   cyl_length = 20, # cylinder length
@@ -59,13 +59,11 @@ Execute a single simulation
 ```{r}
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
-
 start.time <- Sys.time()
 simulation <- perform_simulations(algorithm="static",parameters=params) 
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(paste("Execution Time:", round(as.numeric(time.taken, units="mins"), 2), "mins"))
-
 # Results from the algorithm
 result_alg <- simulation$results
 parameters <- simulation$parameters
@@ -117,15 +115,12 @@ Plot the energies over time, per cell or per layer. To note that *hist_energy* i
 ```{r}
 PATH_ANALYSIS = "tubular_simulations_source/source_analysis.R"
 source(PATH_ANALYSIS)
-
 # Total energy of the tissue
 enerhist_total <- energy_analisis_1sim(hist_points, it = parameters$n_steps, lay = parameters$n_layers, n = parameters$n_cells,total=TRUE)
 plot_energyss(enerhist_total,total=TRUE)
-
 # Average energies over time per cell
 enerhist_total_percell <- energy_analisis_1sim(hist_points, it = parameters$n_steps, lay = parameters$n_layers, n = parameters$n_cells)
 plot_energyss(enerhist_total_percell)
-
 # Average energy over time per cell in each layer
 hist_layers <- energy_layers_sim1(histpts = hist_points, it = parameters$n_steps, Lay = parameters$n_layers, n = parameters$n_cells) 
 plot_energy_decomp(hist_layers)
@@ -140,21 +135,18 @@ Number of edges and percentage of scutoids. Select the iteration you want to stu
 ```{r}
 selectedIteration =  parameters$n_steps
 
-
+# DO NOT MODIFY
 PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
-
 # Percentages of cells depending on the number of edges
 points <- filter(result_alg$points_evolution, Iteration == selectedIteration)
 scutoids_analysis_oneiter(points$x,points$y,(parameters$ratio_rad)*points$x,points$y,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length)
-
 # Average number of neighbors 
 edgear <- funaux2simDOUBLE(result_alg$points_evolution,ps=1,n=parameters$n_cells, cylen = parameters$cyl_length,apical_radius = parameters$apical_rad,it=parameters$n_steps)
 #apical area
 stationarylewisApical(edgear[[1]][1:parameters$n_cells,c(1,2,3)],it=selectedIteration)
 #basal area
 stationarylewisBasal(edgear[[2]][1:parameters$n_cells,c(1,2,3)],it=selectedIteration)
- 
 # Scutoids percentage over time
 scutoids_percr(hist_points,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length,it=parameters$n_steps)
 ```
@@ -179,9 +171,9 @@ start.time <- Sys.time()
 par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopar% {
  params = list(
   seed = i, # randomness
-  n_steps = 6, # simulation steps
-  n_cells = 40, # number of cells
-  n_layers = 6, # numbers of layers (min 3)
+  n_steps = 50, # simulation steps
+  n_cells = 100, # number of cells
+  n_layers = 10, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
   cyl_length = 20, # cylinder length
@@ -198,7 +190,6 @@ time.taken <- end.time - start.time
 print(paste("Execution Time:", round(as.numeric(time.taken, units="mins"), 2), "mins"))
 stopCluster(cl)
 stopImplicitCluster()
-
 par_parameters <- par_results[[1,2]]
 ```
 
@@ -210,6 +201,7 @@ Load pre-existing results. Edit the file name and the number *N_SIM* of simulati
 fileName <- "results/parallel/results_simulation_25_01_31_"
 N_SIM = 10 
 
+# DO NOT MODIFY
 PATH_FUNCTIONS = "tubular_simulations_source/save_simulation_results.R"
 source(PATH_FUNCTIONS)
 par_results <- NULL 
@@ -221,8 +213,7 @@ for(i in 1:N_SIM){
   parameters_i <- simulation_i$parameters
   algorithm_i <- simulation_i$algorithm
   # Build the array
-  par_results <- rbind(par_results, list(results = results_i, parameters = parameters_i, algorithm = algorithm_i))
-}
+  par_results <- rbind(par_results, list(results = results_i, parameters = parameters_i, algorithm = algorithm_i))}
 par_parameters <- par_results[[1,2]]
 ```
 
@@ -234,6 +225,7 @@ Save the tessellation of a selected iteration and simulation. Edit *saveIteratio
 saveIteration <- par_parameters$n_steps 
 saveSimulation <- 2 
 
+# DO NOT MODIFY
 library(dplyr) # to do the filtering operation in the dataframe
 dir.create(file.path("saved_tessellations/"), showWarnings = FALSE)
 PATH_FUNCTIONS = "tubular_simulations_source/save_utils.R"
@@ -253,10 +245,8 @@ Average tissues energies.
 ```{r}
 PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
-
 # Average energies
 enerhist_average <- energy_analisis_averages_par(par_results, it = par_parameters$n_steps, lay = par_parameters$n_layers, n = par_parameters$n_cells,rad_coef = par_parameters$ratio_rad,Radius = par_parameters$apical_rad,cylen = par_parameters$cyl_length,gamma = par_parameters$gamma,lambda=par_parameters$lambda,s0 = par_parameters$s0_ratio)
-
 # Average regression of the total energy 
 #adjsim(par_results,nsim=N_SIM,it=par_parameters$n_steps)
 ```
@@ -268,7 +258,7 @@ Number of edges and relative cell area in the apical and basal area. Edit *selec
 ```{r}
 selectedIteration =  par_parameters$n_steps
 
-
+# DO NOT MODIFY
 PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
 # Reorganize all the simulations by iteration
