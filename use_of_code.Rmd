@@ -1,11 +1,15 @@
 ---
-title: "Metropolis algorithm for N layers."
+title: "3DTubularVoronoi."
 output: html_notebook
 ---
 
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*.
 
 It is recommended to read the user manual before executing.
+
+## Packages
+
+Install necessary packages.
 
 ```{r include=FALSE}
 dependencies <- c(
@@ -17,8 +21,6 @@ dependencies <- c(
   "foreach",
   "doParallel",
   "viridis")
-  #"ggvoronoi",
-  #"gganimate")
 
 for(dep in dependencies){
   if(!require(dep, character.only = TRUE)){
@@ -27,20 +29,17 @@ for(dep in dependencies){
 }
 ```
 
-# Execute 1 simulation
+# 1/ Single simulation
 
-## Run the simulation
+## Parameters
 
-The function that performs Metropolis Algorithm is called "perform_simulations". 
+Parameters for single simulation. Edit the values.
 
 ```{r}
-PATH_MODEL = "tubular_simulations_source/model_execution.R"
-source(PATH_MODEL)
-
 params = list(
   seed = 42, # randomness
   n_steps = 5, # simulation steps
-  n_cells = 50, # number of cells
+  n_cells = 40, # number of cells
   n_layers = 3, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
@@ -50,157 +49,134 @@ params = list(
   #kappa = 1 cause adimentionality (elasticity)
   beta = 100, #constant involved in jumps because of perturbations
   s0_ratio = 1 # characteristic ratio between the acztual radius and apical radius
-  #BENDING
-  ,omega = 1 #bending constant
   )
+```
+
+## Execution
+
+Execute a single simulation
+
+```{r}
+PATH_MODEL = "tubular_simulations_source/model_execution.R"
+source(PATH_MODEL)
 
 start.time <- Sys.time()
-
 simulation <- perform_simulations(algorithm="static",parameters=params) 
-
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(paste("Execution Time:", round(as.numeric(time.taken, units="mins"), 2), "mins"))
 
+# Results from the algorithm
 result_alg <- simulation$results
 parameters <- simulation$parameters
 algorithm <- simulation$algorithm
-```
-
-You can check that the results had been properly saved in your folder.
-
-## Save Tesselation for 3D plots
-
-Now, we select the tessellation that we want to save. Then, to do the 3D plots, we use the Mathematica file with this input.
-
-```{r}
-
-saveFrame <- parameters$n_steps # last frame is parameters$n_steps
-
-library(dplyr) # to do the filtering operation in the dataframe
-dir.create(file.path("saved_tessellations/"))
-PATH_FUNCTIONS = "tubular_simulations_source/save_utils.R"
-source(PATH_FUNCTIONS)
-
-points <- filter(result_alg[[1]], Frame == saveFrame)
-pts_info = save_tessellation_layers(points, n = parameters$n_cells, RadiusA =parameters$apical_rad, Ratio = parameters$ratio_rad,
-                                     cyl_length = parameters$cyl_length, Layers = parameters$n_layers,
-                                     filename = paste0("saved_tessellations/saved_tessellation_frame",saveFrame,".csv"))
+hist_points = result_alg$points_evolution
+hist_energy = result_alg$energy_evolution
 ```
 
 ## Loading results
 
-To load pre-existing results:
+Load previous results. Edit *fileName*.
 
 ```{r}
-# CHANGE file_name WITH THE CORRESPONDING PATH (check the folder results)
-filename <- "results/static/results_simulation_25_01_22.RData"
-simulation <- load_results(filename)
+fileName <- "results/static/results_simulation_25_01_31.RData"
 
+# DO NOT MODIFY
+PATH_FUNCTIONS = "tubular_simulations_source/save_simulation_results.R"
+source(PATH_FUNCTIONS)
+simulation <- load_results(fileName)
 result_alg <- simulation$results
 parameters <- simulation$parameters
 algorithm <- simulation$algorithm
+hist_points = result_alg$points_evolution
+hist_energy = result_alg$energy_evolution
 ```
 
-## Data analysis 1 simulation
+## Tube visualization
 
-### Dataframe with history of points and energy levels
-
-Results are stored in the variable "result_alg". This variable has 2 elements: the history of points locations in every step ("hist_point"), the history of the energy at every step ("hist_energy").
-
--   "hist_points": each row represents a point, the columns "x" and "y" represent the x and y coordinates of the point, and the column "Frame" represents the step of the algorithm. Number of rows = n_steps x n_cells
-
--   "hist_energy" contains simply 2 columns, one indicating the iteration (or step) and other indicating the energy after performing that number of iterations of Metropolis. Number of rows = n_steps.
-
-It is necessary to generate this data to perform the following analysis.
+Save the tessellation of a selected iteration. Edit *saveIteration*. The first iteration is 0 and the last one is *parameters\$n_steps*.
 
 ```{r}
-# Points
-hist_points = result_alg$points_evolution
-knitr::kable(hist_points[2:10,], format="html") # Vizualization of the 10 first rows
+saveIteration <- parameters$n_steps  
 
-# Energy
-hist_energy = result_alg$energy_evolution
-knitr::kable(hist_energy[1:10,], format="html") 
+# DO NOT MODIFY
+library(dplyr) # to do the filtering operation in the dataframe
+dir.create(file.path("saved_tessellations/"), showWarnings = FALSE)
+PATH_FUNCTIONS = "tubular_simulations_source/save_utils.R"
+source(PATH_FUNCTIONS)
+points <- filter(result_alg[[1]], Iteration == saveIteration)
+pts_info = save_tessellation_layers(points, n = parameters$n_cells, RadiusA =parameters$apical_rad, Ratio = parameters$ratio_rad,cyl_length = parameters$cyl_length, Layers = parameters$n_layers, filename = paste0("saved_tessellations/saved_tessellation_iteration_",saveIteration,".csv"))
 ```
 
-### Energy levels plot
+## Data analysis - single simulation
 
-The function "energy_analisis_1sim" takes as argument the points in each iteration ("hist_points") generated previously and returns the energy shelled by type in each iteration (an extension of the energy history). The 4 columns represent the elastic, contractile, tensile energy and total energy (sum of all). The function "energy_analysis_nobend" takes as argument the history of points and returns the plots of the energies at the initial step and at the final step, depending on the layer.
+### a/ Energy levels plots
+
+Plot the energies over time, per cell or per layer. To note that *hist_energy* is equivalent to *enerhist_total\$toten*.
 
 ```{r}
 PATH_ANALYSIS = "tubular_simulations_source/source_analysis.R"
 source(PATH_ANALYSIS)
 
-# Average energies over time
-enerhist_total <- energy_analisis_1sim(hist_points, it = parameters$n_steps, lay = parameters$n_layers, n = parameters$n_cells)
-plot_energyss(enerhist_total)
-knitr::kable(enerhist_total[1:10,], format="html") 
+# Total energy of the tissue
+enerhist_total <- energy_analisis_1sim(hist_points, it = parameters$n_steps, lay = parameters$n_layers, n = parameters$n_cells,total=TRUE)
+plot_energyss(enerhist_total,total=TRUE)
 
-# Energies per layer
-results_analysis <- energy_analysis_nobend(histpts = hist_points, it = parameters$n_steps, n = parameters$n_cells, Lay = parameters$n_layers)
-initial_energies <- results_analysis[[1]]
-final_energies <- results_analysis[[2]]
+# Average energies over time per cell
+enerhist_total_percell <- energy_analisis_1sim(hist_points, it = parameters$n_steps, lay = parameters$n_layers, n = parameters$n_cells)
+plot_energyss(enerhist_total_percell)
 
-# Per layer over time
+# Average energy over time per cell in each layer
 hist_layers <- energy_layers_sim1(histpts = hist_points, it = parameters$n_steps, Lay = parameters$n_layers, n = parameters$n_cells) 
-knitr::kable(hist_layers[1:3,], format="html")
 plot_energy_decomp(hist_layers)
+# First and last frame
+hist_layers_firstlast <- energy_analysis_nobend(histpts = hist_points, it = parameters$n_steps, n = parameters$n_cells, Lay = parameters$n_layers)
 ```
 
-### Scutoids
+### b/ Typology
 
-Count number of scutoids. A warning message can appear when data is out of the scope.
+Number of edges and percentage of scutoids. Select the iteration you want to study by editing *selectedIteration*.
 
 ```{r}
+selectedIteration =  parameters$n_steps
+
+
 PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
 
-# Plot scutoids table count
-frame =  parameters$n_steps
-points <- filter(result_alg$points_evolution, Frame == frame)
-#scutoids_analysis_oneiter(points$x,points$y,(parameters$ratio_rad)*points$x,points$y,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length)
-
-# Scutoids percentage over time
-scutoids_percr(hist_points,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length,it=parameters$n_steps)
-```
-
-```{r}
-# Neighbors
-PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
-source(PATH_ANALYSIS)
+# Percentages of cells depending on the number of edges
+points <- filter(result_alg$points_evolution, Iteration == selectedIteration)
+scutoids_analysis_oneiter(points$x,points$y,(parameters$ratio_rad)*points$x,points$y,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length)
 
 # Average number of neighbors 
 edgear <- funaux2simDOUBLE(result_alg$points_evolution,ps=1,n=parameters$n_cells, cylen = parameters$cyl_length,apical_radius = parameters$apical_rad,it=parameters$n_steps)
 #apical area
-stationarylewisApical(edgear[[1]][1:parameters$n_cells,c(1,2,3)])
+stationarylewisApical(edgear[[1]][1:parameters$n_cells,c(1,2,3)],it=selectedIteration)
 #basal area
-stationarylewisBasal(edgear[[2]][1:parameters$n_cells,c(1,2,3)])
+stationarylewisBasal(edgear[[2]][1:parameters$n_cells,c(1,2,3)],it=selectedIteration)
  
+# Scutoids percentage over time
+scutoids_percr(hist_points,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length,it=parameters$n_steps)
 ```
 
-# Parallel simulations
+# 2/ Parallelization
 
 ## Execution
 
-Parallel execution to execute multiple simulations at the same time.
+Execute multiple simulations at the same time using different seeds (random initial conditions). Choose the number of simulations *N_SIM* and edit the list of parameters.
 
 ```{r include=FALSE}
+N_SIM = 10 # number of simulations
+
 library(foreach)
 library(doParallel)
-
 PATH_MODEL = "tubular_simulations_source/model_execution.R"
 source(PATH_MODEL)
-
-N_SIM = 10 # number of simulations
 N_CLUSTERS <- detectCores() - 1  # Leave one core free for other processes
 cl <- makeCluster(N_CLUSTERS) 
 registerDoParallel(cl)
-
 start.time <- Sys.time()
-
 par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopar% {
-  
  params = list(
   seed = i, # randomness
   n_steps = 70, # simulation steps
@@ -214,17 +190,12 @@ par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopa
   #kappa = 1 cause adimentionality (elasticity)
   beta = 100, #constant involved in jumps because of perturbations
   s0_ratio = 1 # characteristic ratio between the actual radius and apical radius
-  #BENDING
-  #,omega = 1 #bending constant
   )
-
   do.call(perform_simulations,list(algorithm="static", parameters=params,save_parallel=TRUE))
 }
-
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(paste("Execution Time:", round(as.numeric(time.taken, units="mins"), 2), "mins"))
-
 stopCluster(cl)
 stopImplicitCluster()
 
@@ -233,18 +204,17 @@ par_parameters <- par_results[[1,2]]
 
 ## Loading results
 
-To load pre-existing results:
+Load pre-existing results. Edit the file name and the number *N_SIM* of simulations to import.
 
 ```{r}
+fileName <- "results/parallel/results_simulation_25_01_19_"
+N_SIM = 10 
+
 PATH_FUNCTIONS = "tubular_simulations_source/save_simulation_results.R"
 source(PATH_FUNCTIONS)
-
-par_results <- NULL # uncomment this if you want to load data (security)
-N_SIM = 10
-
+par_results <- NULL 
 for(i in 1:N_SIM){
-  filename <- paste0("results/parallel/results_simulation_25_01_19_",i,".RData")
-  
+  filename <- paste0(fileName,i,".RData")
   # Extract  
   simulation_i <- load_results(filename)
   results_i <- simulation_i$results
@@ -256,7 +226,7 @@ for(i in 1:N_SIM){
 par_parameters <- par_results[[1,2]]
 ```
 
-## Analysis parralel simulations
+## Data analysis - Parallel
 
 ### Structure of the dataframe "par_results"
 
@@ -302,7 +272,7 @@ source(PATH_SIMANALYSIS)
 adjsim(par_results,nsim=N_SIM,it=par_parameters$n_steps)
 ```
 
-The function "energy_analisis_averages" can be quite long that is why it is built in parallel. 
+The function "energy_analisis_averages" can be quite long that is why it is built in parallel.
 
 ```{r}
 PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
@@ -312,7 +282,7 @@ source(PATH_ANALYSIS)
 enerhist_average <- energy_analisis_averages_par(par_results, it = par_parameters$n_steps, lay = par_parameters$n_layers, n = par_parameters$n_cells,rad_coef = par_parameters$ratio_rad,Radius = par_parameters$apical_rad,cylen = par_parameters$cyl_length,gamma = par_parameters$gamma,lambda=par_parameters$lambda,s0 = par_parameters$s0_ratio)
 ```
 
-The function "scutoids_percr_simulations_par" can be quite long that is why it is built in parallel. 
+The function "scutoids_percr_simulations_par" can be quite long that is why it is built in parallel.
 
 ```{r}
 PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
@@ -326,7 +296,6 @@ scutoids_analysis_simulations(par_results, it = frame , sim = N_SIM, n = par_par
 scutoids_percr_simulations_par(par_results, n=par_parameters$n_cells, sim=N_SIM, it=  par_parameters$n_steps,ap_rad = par_parameters$apical_rad, cylen=par_parameters$cyl_length,ratio=par_parameters$ratio_rad)
 
 ```
-
 
 ```{r}
 
