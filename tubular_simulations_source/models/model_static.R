@@ -202,13 +202,15 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
   energyinit <- energytesel
   
   #We create the variables to store the results
-  energhist <- data.frame(iteration=numeric(n_steps), energy=numeric(n_steps))
+  energhist <- data.frame(Iteration=numeric(n_steps), energy=numeric(n_steps))
   energhist[1,c(1,2)] <- c(0,energyinit)
+  
   histpts <- data.frame(x=numeric(3*n_cells*n_steps),
                         y=numeric(3*n_cells*n_steps),
-                        Frame = integer(3*n_cells*n_steps))
+                        Iteration = integer(3*n_cells*n_steps))
+  
   histpts[1:(3*n_cells),c(1,2)] <- points
-  histpts[1:(3*n_cells),3] <- 1
+  histpts[1:(3*n_cells),3] <- 0
   points2 <- data.frame(x=x,y=y)
   energytesel
   
@@ -227,13 +229,13 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
     }
     gc()
     histpts[(j*3*n_cells+1):(j*3*n_cells+3*n_cells),c(1,2)] <- points
-    histpts[(j*3*n_cells+1):(j*3*n_cells+3*n_cells),3]<-j+1
+    histpts[(j*3*n_cells+1):(j*3*n_cells+3*n_cells),3]<-j
     energhist[j+1,c(1,2)]<-c(j,energytesel)
     energytesel
   }
   # nu2 <- nu_sq(points = points, rec = rec, n_cells = 100)
-  return(list(points_evolution=histpts, 
-              energy_evolution=energhist
+  return(list(points_evolution=histpts 
+              ,energy_evolution=energhist
               # nu_2=nu2
               ))
 }
