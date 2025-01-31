@@ -34,12 +34,12 @@ funaux2sim<-function(ptsord, n = 100, ps = 100, cylen,apical_radius,it){
   #ps is the number of simulations done
   #First execute the ord function(for results)
   
-  edgear<-data.frame(edges=integer(),area=double(),Frame=integer())
+  edgear<-data.frame(edges=integer(),area=double(),Iteration=integer())
   for(j in 1:ps){
-    for (i in 1:it) {
+    for (i in 1:(it+1)) {
       a<-length(edgear$edges)
       edgear[(a+1):(a+n),c(1,2)] <- funaux(ptsord[((i-1)*(3*n) + 1 + n*(j-1)):(i*3*n + n*(j-1)),c(1,2)],n = n, cylen = cylen,apical_radius = apical_radius)
-      edgear[(a+1):(a+n),3]<-i
+      edgear[(a+1):(a+n),3]<-i-1
   }
   }
   return(edgear)
@@ -54,23 +54,23 @@ funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5,cylen,apical_r
   #This function returns a big dataframe, made up of one dataframe for each simulation
   # the df for one single simulation represents the edges and area of each of the cells.
   
-  edgearA <- data.frame(edges=integer(), area=double(), Frame=integer())
+  edgearA <- data.frame(edges=integer(), area=double(), Iteration=integer())
   for(j in 1:ps){
-    for (i in 1:it) {
+    for (i in 1:(it+1)) {
     a <- length(edgearA$edges)
     edgearA[(a+1):(a+n),c(1,2)] <- funaux(ptsord[((i-1)*(3*n) + 1 + n*(j-1)):(i*3*n + n*(j-1)),c(1,2)], rec=c(0,0+3*(2*pi*apical_radius),0,cylen), n=n, cylen = cylen,apical_radius=apical_radius)
-    edgearA[(a+1):(a+n),3] <- i 
+    edgearA[(a+1):(a+n),3] <- i -1
   }}
   
   ptsordB <- ptsord
   ptsordB$x <- ptsordB$x*Ratio
   
-  edgearB <- data.frame(edges=integer(),area=double(),Frame=integer())
+  edgearB <- data.frame(edges=integer(),area=double(),Iteration=integer())
   for(j in 1:ps){
-    for (i in 1:it) {
+    for (i in 1:(it+1)) {
       a <- length(edgearB$edges)
       edgearB[(a+1):(a+n),c(1,2)] <- funaux(ptsordB[((i-1)*(3*n) + 1 + n*(j-1)):(i*3*n + n*(j-1)),c(1,2)], rec=c(0,0+3*(2*pi*apical_radius)*Ratio,0,cylen),n=n,cylen=cylen,apical_radius=apical_radius*Ratio)
-      edgearB[(a+1):(a+n),3]<-i
+      edgearB[(a+1):(a+n),3]<-i-1
     }
   }
   return(list(edgearA,edgearB))
@@ -117,9 +117,9 @@ stationarylewisBasal<-function(edgear,it){
   
   datahist<-data.frame(edges=numeric(),frec=numeric())
   
-  for (i in min(edgear$Frame):max(edgear$Frame)){
+  for (i in min(edgear$Iteration):max(edgear$Iteration)){
     for (j in mined:maxed) {
-      dat<-dplyr::filter(edgear, edges == j & Frame == i)
+      dat<-dplyr::filter(edgear, edges == j & Iteration == i)
       pos<-(i-1)*quant+j-mined+1
       datahist[pos,c(1,2)]<-c(j, length(dat$edges))
     }
@@ -240,9 +240,9 @@ stationarylewisApical<-function(edgear,it){
   
   datahist<-data.frame(edges=numeric(),frec=numeric())
   
-  for (i in min(edgear$Frame):max(edgear$Frame)){
+  for (i in min(edgear$Iteration):max(edgear$Iteration)){
     for (j in mined:maxed) {
-      dat<-dplyr::filter(edgear, edges == j & Frame == i)
+      dat<-dplyr::filter(edgear, edges == j & Iteration == i)
       pos<-(i-1)*quant+j-mined+1
       datahist[pos,c(1,2)]<-c(j, length(dat$edges))
     }
@@ -331,7 +331,7 @@ ord <- function(results, iter = 150, n=100, sim=100){
   n_points = 3*n
   ptsord<-data.frame(x=numeric(n_points*sim),
                      y=numeric(n_points*sim), 
-                     Frame=numeric(n_points*sim),
+                     Iteration=numeric(n_points*sim),
                      simulation=numeric(n_points*sim))
   for (i in 0:(sim-1)) {
     ptsord[(i*(n_points*iter)+1):((i+1)*(n_points*iter)),c(1,2,3)]<-results[[i+1]][[1]][c(1,2,3)]
@@ -353,15 +353,15 @@ regnls<-function(energh){
   summary(m)
 }
 
-regnls2<-function(energh, n=100){
+regnls2<-function(energh,it){
   
   #This functions makes a single regression for one iteration with the function
   #nls_multistart (which is much better for all cases)
   
-  x<-unlist(lapply(energh$iteration,as.numeric))
+  x<-unlist(lapply(energh$Iteration,as.numeric))
   y<-unlist(lapply(energh$energy,as.numeric))
   m<-nls_multstart(y~I(a+b*(1-exp(-x/c))),
-                   iter = 500,
+                   iter = it,
                    start_lower = list(a=0,b=-5,c=5),
                    start_upper = list(a=5,b=5,c=30))
   #plot(x,y)
@@ -377,20 +377,21 @@ adjsim<-function(results,nsim=100,it=150){
   
   coefest<-data.frame(a=double(nsim),b=double(nsim),c=double(nsim))
   for (i in 1:nsim) {
-    coefest[i,c(1,2,3)]<-regnls2(results[[i,1]]$energy_evolution,n=nsim)
+    coefest[i,c(1,2,3)]<-regnls2(results[[i,1]]$energy_evolution,it=it)
   }
   a<-mean(coefest$a)
   b<-mean(coefest$b)
   c<-mean(coefest$c)
   adj<-function(x) a+b*(1-exp(-x/c))
-  adj_data<-data.frame(x=1:it,y=adj(1:it))
+  adj_data<-data.frame(x=0:it,y=adj(0:it))
   ploten<-ggplot(data = adj_data, aes(x=x,y=y))+
     geom_line(colour="#F8766D")+
     xlab("Iteration of the algorithm")+
     ylab("Average energy of the cells")+
-    ggtitle("Average energy relaxation of the system")
+    ggtitle("Average energy relaxation of the system")+
+  ylim(0, max(adj_data$y) + 0.1 * max(adj_data$y))
   show(ploten)
-  return(paste("Regression function for the energy: a+b*(1-exp(-x/c) with a=",a,"b=",b,"c=",c))
+  return(print(paste0("Regression function for the energy: a+b*(1-exp(-x/c) with a=",a,"b=",b,"c=",c)))
 }
 
 scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy,ratio,ap_rad, n = 100,cylen){
@@ -494,7 +495,7 @@ scutoids_percr <-function(histpts, n = 100, it=150,ratio,ap_rad,cylen,plotShow=T
       ggtitle("Evolution of the percentage of scutoids of the system")
     show(ploten)
   }
-  #return(perc)
+  return(perc)
 }
 
   
@@ -540,7 +541,7 @@ scutoids_percr_simulations_par <- function(results, n=100, sim=100, it=150, ap_r
   rect1 <- c(xmin, xmin + 3 * xmax, ymin, ymax)
   rect2 <- c(xmin, xmin + 3 * (xmax * ratio), ymin, ymax)
   
-  perc <- data.frame(it = 1:(it+1), percen = rep(0, it))
+  perc <- data.frame(Iteration = 0:it, percen = rep(0, (it+1)))
   
   # Use foreach for parallel execution
   foreach(j = 1:sim, .combine = 'rbind', .packages = c('deldir', 'dplyr'), .export = c('scutoids_percr')) %dopar% {
@@ -550,14 +551,14 @@ scutoids_percr_simulations_par <- function(results, n=100, sim=100, it=150, ap_r
     
     return(percen)  # Return the perc_sc values for each simulation
   } -> perc_results
+  
   # Stop the parallel cluster
   stopCluster(cl)
-
     # Summing the perc_results and averaging over simulations
   perc$percen <- colMeans(perc_results)
   
   # Plotting the results
-  ploten <- ggplot(perc, aes(x = it, y = percen)) +
+  ploten <- ggplot(perc, aes(x = Iteration, y = percen)) +
     geom_line(colour = "#F8766D") +
     xlab("Iteration of the algorithm") +
     ylab("Percentage of scutoids") +
@@ -649,8 +650,8 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 1
     #each simulation have a different distribution of sides, so we have to adapt
     
     a <- length(histdf_count[[1]])
-    ptsx <- dplyr::filter(results[[i]]$points_evolution, Frame==it)$x
-    ptsy <- dplyr::filter(results[[i]]$points_evolution, Frame==it)$y
+    ptsx <- dplyr::filter(results[[i]]$points_evolution, Iteration==it)$x
+    ptsy <- dplyr::filter(results[[i]]$points_evolution, Iteration==it)$y
     df<-scutoids_prep(ptsx, ptsy,
                       Ratio*ptsx, ptsy,Ratio,ap_rad,n,cylen)
     len<-length(df[[1]])
@@ -739,7 +740,7 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 1
   )
   
   # Confirmation
-  cat("Plot saved as:", output_file)
+  print(paste0("Plot saved:", output_file))
 }
 
 
@@ -768,7 +769,7 @@ energy_iteration <- function(pointsx, pointsy, n=100, Lay = 10,rad_coef,Radius,c
   contractilener<-0
   totalener<-0
   
-  A0 <- ((rad_coef*Radius+Radius)*pi*cylen)/n
+  A0 <- (2*pi*Radius*(cylen))/n
   gamad <- gamma
   lamad <- lambda
   
@@ -787,10 +788,10 @@ energy_iteration <- function(pointsx, pointsy, n=100, Lay = 10,rad_coef,Radius,c
     perims <- (tilePerim(tilest)$perimeters)/sqrt(A0)
     areas <- sapply(tilest,function(x){x$area/A0})
     
-    elener <- (sum((areas-1)^2)/n)
-    tenener <- sum(lamad*perims)/n
+    elener <- (sum((areas-1)^2))
+    tenener <- sum(lamad*perims)
     gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/s0 )   
-    contener <- sum((gam/2)*(perims^2))/n
+    contener <- sum((gam/2)*(perims^2))
     elasticener <- elasticener+elener
     tensionener <- tensionener+tenener
     contractilener <- contractilener+contener
@@ -810,7 +811,7 @@ energy_analisis_1sim <- function(histpts, it = 150, lay = 10, n =100,rad_coef,Ra
                        conten = double(it+1), toten = double(it+1))
   #print(head(histpts))
   for (i in 1:(it+1)) {
-    pts <- filter(histpts, Frame==i)
+    pts <- filter(histpts, Iteration==(i-1))
     histener[i,c(2,3,4,5)] <- energy_iteration(pts$x,pts$y, n = n, Lay = lay,rad_coef = rad_coef,Radius = Radius,cylen = cylen,lambda=lambda,gamma=gamma,s0=s0)
   }
   return(histener)
@@ -822,7 +823,7 @@ energy_analisis_averages_par <- function(results, it = 150, lay = 10, n = 100,ra
   N_SIM <- nrow(results)
   
   # Initialize a data frame to store averaged energy values
-  average_energy <- data.frame(it = 1:(it + 1), elen = double(it + 1), 
+  average_energy <- data.frame(Iteration = 1:(it + 1), elen = double(it + 1), 
                                tenen = double(it + 1), conten = double(it + 1), 
                                toten = double(it + 1))
   
@@ -833,7 +834,7 @@ energy_analisis_averages_par <- function(results, it = 150, lay = 10, n = 100,ra
   
   # Use foreach for parallel execution
   energy_results <- 
-    foreach(i = 1:N_SIM, .combine = 'rbind', .packages = c('dplyr','deldir'), .export = c('energy_analisis_1sim','energy_iteration','energy_iteration')) %dopar% {
+    foreach(i = 1:N_SIM, .combine = 'rbind', .packages = c('dplyr','deldir'), .export = c('energy_analisis_1sim','energy_iteration')) %dopar% {
     histpts <- results[[i, 1]]$points_evolution
     energy_analisis_1sim(histpts, it = it, lay = lay, n = n, rad_coef = rad_coef,cylen = cylen,Radius=Radius,lambda=lambda,gamma = gamma,s0=s0)
   } 
@@ -855,10 +856,10 @@ energy_analisis_averages_par <- function(results, it = 150, lay = 10, n = 100,ra
     group_by(it) %>%
     summarize(across(c(elen, tenen, conten, toten), mean))
   
-  average_energy$toten <- average_energy$toten * n
-  average_energy$tenen <- average_energy$tenen * n
-  average_energy$elen <- average_energy$elen * n
-  average_energy$conten <- average_energy$conten * n
+  average_energy$toten <- average_energy$toten 
+  average_energy$tenen <- average_energy$tenen 
+  average_energy$elen <- average_energy$elen 
+  average_energy$conten <- average_energy$conten 
   
   # p<-ggplot(average_energy, aes(x = it))+
   #   geom_line(aes(y = toten, colour = "Total energy"))+
@@ -907,7 +908,7 @@ energy_analisis_averages_par <- function(results, it = 150, lay = 10, n = 100,ra
       legend.text = element_text(size = 12),
       legend.position = "top",
       legend.key.size = unit(1, "lines"))+
-    scale_y_continuous(limits = c(0, 150))
+      ylim(0, max(average_energy$toten) + 0.1 * max(average_energy$toten))
     
   show(p)
   
@@ -924,7 +925,7 @@ energy_analisis_averages_par <- function(results, it = 150, lay = 10, n = 100,ra
   )
   
   # Confirmation
-  cat("Plot saved as:", output_file)
+  print(paste0("Plot saved:", output_file))
   
   return(average_energy)
 }

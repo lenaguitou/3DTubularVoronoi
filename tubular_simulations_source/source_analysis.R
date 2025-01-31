@@ -16,6 +16,7 @@ Radius2 <- rad_coef*Radius
 cyl_thickness <- Radius2-Radius
 cyl_length = parameters$cyl_length
 cyl_width = Radius*(2*pi)
+s0 <- parameters$s0_ratio
 rec <- list()
 rad <- list()
 L = parameters$n_layers
@@ -55,7 +56,7 @@ energy_analysis <- function(points){
     
     elener <- (sum((areas-1)^2)/n)
     tenener <- sum(lamad*perims)/n
-    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1 )
+    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/s0 )
     contener <- sum((gam/2)*(perims^2))/n
     tesener[i,c(2,3,4,6)] <- c(elener/Lay,
                                tenener/lay,
@@ -127,7 +128,7 @@ energy_analysis_nobend <- function(histpts, it=150, n=100, Lay=10){
     
     elener <- (sum((areas-1)^2)/n)
     tenener <- sum(lamad*perims)/n
-    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1 )
+    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/s0)
     contener <- sum((gam/2)*(perims^2))/n
     tesener[i,c(2,3,4,5)] <- c(elener/(Lay),
                                tenener/(Lay),
@@ -265,7 +266,7 @@ energy_iteration <- function(pointsx, pointsy, n=100, Lay = 10){
     
     elener <- (sum((areas-1)^2)/n)
     tenener <- sum(lamad*perims)/n
-    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1)
+    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/s0)
     contener <- sum((gam/2)*(perims^2))/n
     elasticener <- elasticener+elener
     tensionener <- tensionener+tenener
@@ -303,7 +304,7 @@ energy_iteration_total <- function(pointsx, pointsy, n=100, Lay = 10){
     
     elener <- (sum((areas-1)^2))
     tenener <- sum(lamad*perims)
-    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1)
+    gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/s0)
     contener <- sum((gam/2)*(perims^2))
     elasticener <- elasticener+elener
     tensionener <- tensionener+tenener
@@ -350,6 +351,7 @@ plot_energyss<-function(enerhist,total=FALSE){
     geom_line(aes(y= tenen, colour = "Adhesion"))+
     geom_line(aes(y = elen, colour = "Elastic"))+
     geom_line(aes(y = conten, colour = "Contractility"))+
+    ylim(0, max(enerhist$toten) + 0.1 * max(enerhist$toten))+
     # geom_line(aes(x = Layer, y = Bending_energy, colour = "Bending energy"))+
     labs(title =  string,
          x = "Iteration", y = string,
@@ -402,7 +404,7 @@ energy_1_layer <- function(pointsx, pointsy, rec, i, Lay =10, n=100){
   perims <- (tilePerim(tilest)$perimeters)/sqrt(A0)
   areas <- sapply(tilest,function(x){(x$area/A0)-1})
   
-  gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/1 )
+  gam<-gamad*exp((1-(rad[[i]]/rad[[1]]))/s0)
   
   tesener<-sum((areas)^2+(gam/2)*(perims^2)+
                  lamad*perims)/(Lay*n)
