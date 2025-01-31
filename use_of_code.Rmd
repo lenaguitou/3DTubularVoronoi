@@ -246,71 +246,43 @@ pts_info = save_tessellation_layers(points, n = par_parameters$n_cells, RadiusA 
 
 ## Data analysis - Parallel
 
-### Structure of the dataframe "par_results"
+### a/ Energy levels plots
 
-Results are stored in the variable "par_results". This variable has N_SIM elements of 3 elements each one (results, parameters and algorithm). Each element has "n_cells" rows et "n_steps" columns.
-
-`{r}{r include=FALSE} # Access information about the simulation 3 hist_points_sim_3 = par_results[[3,1]]$points_evolution`
-
-The following functions work only for parallel simulations using same number of cells and same number of steps.
-
-```{r}
-PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
-source(PATH_SIMANALYSIS)
-
-# Reorganize all the simulations by iteration
-resord <- ord(par_results, iter = par_parameters$n_steps, n=par_parameters$n_cells, sim = N_SIM)
-
-# Average number of neighbors in basal surface per frame
-edgearsim <- funaux2simDOUBLE(resord,n=par_parameters$n_cells,ps=N_SIM,cylen = par_parameters$cyl_length, apical_radius = par_parameters$apical_rad, Ratio = par_parameters$ratio_rad,it=par_parameters$n_steps)
-
-# AVERAGE OVER ALL FRAMES 
-# Average number of neighbors in the apical area 
-#stationarylewisApical(edgearsim[[1]][1:(par_parameters$n_cells*N_SIM),c(1,2,3)])  
-# Average number of neighbors in the basal area
-#stationarylewisBasal(edgearsim[[2]][1:(par_parameters$n_cells*N_SIM),c(1,2,3)])  
-
-# AVERAGE SELECTED FRAMES 
-selected_frame =  par_parameters$n_steps
-# Average number of neighbors in the apical area 
-edgear_filteredA <- dplyr::filter(edgearsim[[1]], Frame == selected_frame)
-stationarylewisApical(edgear_filteredA[1:(par_parameters$n_cells),c(1,2,3)],it = selected_frame)  
-# Average number of neighbors in the basal area
-edgear_filteredB <- dplyr::filter(edgearsim[[2]], Frame == selected_frame)
-stationarylewisBasal(edgear_filteredB[1:(par_parameters$n_cells),c(1,2,3)],it = selected_frame) 
-```
-
-An error message can appear that comes from the instability of the regression function. If it happens the function doesnt work, right click on this chunk, "reload" and run it again.
-
-```{r}
-PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
-source(PATH_SIMANALYSIS)
-
-# Average energy relaxation of the tesselations and regression
-adjsim(par_results,nsim=N_SIM,it=par_parameters$n_steps)
-```
-
-The function "energy_analisis_averages" can be quite long that is why it is built in parallel.
+Average tissues energies.
 
 ```{r}
 PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
 
-# Average energies relaxation over time
+# Average energies
 enerhist_average <- energy_analisis_averages_par(par_results, it = par_parameters$n_steps, lay = par_parameters$n_layers, n = par_parameters$n_cells,rad_coef = par_parameters$ratio_rad,Radius = par_parameters$apical_rad,cylen = par_parameters$cyl_length,gamma = par_parameters$gamma,lambda=par_parameters$lambda,s0 = par_parameters$s0_ratio)
+
+# Average regression of the total energy 
+#adjsim(par_results,nsim=N_SIM,it=par_parameters$n_steps)
 ```
 
-The function "scutoids_percr_simulations_par" can be quite long that is why it is built in parallel.
+### b/ Typology
+
+Number of edges and relative cell area in the apical and basal area. Edit *selectedIteration* to select the iteration. The first one is 0 and the last one is *par_parameters\$n_steps*.
 
 ```{r}
+selectedIteration =  par_parameters$n_steps
+
+
 PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
-
+# Reorganize all the simulations by iteration
+resord <- ord(par_results, iter = par_parameters$n_steps, n=par_parameters$n_cells, sim = N_SIM)
+# Average number of neighbors in basal surface per frame
+edgearsim <- funaux2simDOUBLE(resord,n=par_parameters$n_cells,ps=N_SIM,cylen = par_parameters$cyl_length, apical_radius = par_parameters$apical_rad, Ratio = par_parameters$ratio_rad,it=par_parameters$n_steps)
+# Average number of neighbors in the apical area 
+edgear_filteredA <- dplyr::filter(edgearsim[[1]], Iteration == selectedIteration)
+stationarylewisApical(edgear_filteredA[1:(par_parameters$n_cells),c(1,2,3)],it = selectedIteration)  
+# Average number of neighbors in the basal area
+edgear_filteredB <- dplyr::filter(edgearsim[[2]], Iteration == selectedIteration)
+stationarylewisBasal(edgear_filteredB[1:(par_parameters$n_cells),c(1,2,3)],it = selectedIteration) 
 # Scutoids table percentages
-frame <-  par_parameters$n_steps
-scutoids_analysis_simulations(par_results, it = frame , sim = N_SIM, n = par_parameters$n_cells,cylen = par_parameters$cyl_length,ap_rad = par_parameters$apical_rad, Ratio = par_parameters$ratio)
-
-# Scutoids percentage over time (parallel execution)
+scutoids_analysis_simulations(par_results, it = selectedIteration , sim = N_SIM, n = par_parameters$n_cells,cylen = par_parameters$cyl_length,ap_rad = par_parameters$apical_rad, Ratio = par_parameters$ratio)
+# Scutoids percentage over time  
 scutoids_percr_simulations_par(par_results, n=par_parameters$n_cells, sim=N_SIM, it=  par_parameters$n_steps,ap_rad = par_parameters$apical_rad, cylen=par_parameters$cyl_length,ratio=par_parameters$ratio_rad)
-
 ```
