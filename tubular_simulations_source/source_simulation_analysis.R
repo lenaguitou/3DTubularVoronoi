@@ -241,6 +241,7 @@ stationarylewisApical<-function(edgear,it){
   datahist<-data.frame(edges=numeric(),frec=numeric())
   
   for (i in min(edgear$Iteration):max(edgear$Iteration)){
+    print(i)
     for (j in mined:maxed) {
       dat<-dplyr::filter(edgear, edges == j & Iteration == i)
       pos<-(i-1)*quant+j-mined+1
@@ -422,7 +423,7 @@ scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy,ratio
   total_count <- sum(countdf$count)
   
   # Convert counts to percentages
-  countdf$percent <- 100-(countdf$count / total_count) * 100
+  countdf$percent <- (countdf$count / total_count) * 100
 
   # Filter to only keep percentages greater  
   #countdf <- dplyr::filter(countdf, percent >= 1)
