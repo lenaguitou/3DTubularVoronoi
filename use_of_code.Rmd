@@ -144,9 +144,11 @@ scutoids_analysis_oneiter(points$x,points$y,(parameters$ratio_rad)*points$x,poin
 # Average number of neighbors 
 edgear <- funaux2simDOUBLE(result_alg$points_evolution,ps=1,n=parameters$n_cells, cylen = parameters$cyl_length,apical_radius = parameters$apical_rad,it=parameters$n_steps)
 #apical area
-stationarylewisApical(edgear[[1]][1:parameters$n_cells,c(1,2,3)],it=selectedIteration)
+edgear_filtA = dplyr::filter(edgear[[1]], Iteration == selectedIteration)
+stationarylewisApical(edgear_filtA[1:parameters$n_cells,c(1,2,3)],it=selectedIteration)
 #basal area
-stationarylewisBasal(edgear[[2]][1:parameters$n_cells,c(1,2,3)],it=selectedIteration)
+edgear_filtB = dplyr::filter(edgear[[2]], Iteration == selectedIteration)
+stationarylewisBasal(edgear_filtB[1:parameters$n_cells,c(1,2,3)],it=selectedIteration)
 # Scutoids percentage over time
 scutoids_percr(hist_points,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length,it=parameters$n_steps)
 ```
@@ -232,8 +234,7 @@ PATH_FUNCTIONS = "tubular_simulations_source/save_utils.R"
 source(PATH_FUNCTIONS)
 points <- filter(par_results[[saveSimulation]]$points_evolution, Iteration == saveIteration)
 pts_info = save_tessellation_layers(points, n = par_parameters$n_cells, RadiusA = par_parameters$apical_rad, Ratio = par_parameters$ratio_rad,
-                                     cyl_length = parameters$cyl_length, Layers = parameters$n_layers,
-                                     filename = paste0("saved_tessellations/saved_tessellation_iteration_",saveIteration,".csv"))
+                                     cyl_length = parameters$cyl_length, Layers = parameters$n_layers,filename = paste0("saved_tessellations/saved_tessellation_iteration_",saveIteration,".csv"))
 ```
 
 ## Data analysis - Parallel
