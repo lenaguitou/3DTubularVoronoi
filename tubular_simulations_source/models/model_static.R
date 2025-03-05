@@ -160,7 +160,6 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
                        apical_rad = 5/(2*pi), ratio_rad = 2.5, cyl_length = 20,
                        gamma = 0.15, lambda = 0.04, beta = 100, s0_ratio=1){
 
-  
   #We define our variables
   
   RadiusB <- ratio_rad*apical_rad
@@ -232,6 +231,7 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
     histpts[(j*3*n_cells+1):(j*3*n_cells+3*n_cells),3]<-j
     energhist[j+1,c(1,2)]<-c(j,energytesel)
     energytesel
+    print(paste0("step ",j," done"))
   }
   # nu2 <- nu_sq(points = points, rec = rec, n_cells = 100)
   return(list(points_evolution=histpts 
