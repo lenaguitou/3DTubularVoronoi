@@ -395,7 +395,7 @@ adjsim<-function(results,nsim=100,it=150){
   return(print(paste0("Regression function for the energy: a+b*(1-exp(-x/c) with a=",a,"b=",b,"c=",c)))
 }
 
-scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy,ratio,ap_rad, n = 100,cylen){
+scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy,ratio,ap_rad, n = 100,cylen,it){
   
   #We define the vertices of the plane
   xmin <- 0
@@ -429,17 +429,54 @@ scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy,ratio
   #countdf <- dplyr::filter(countdf, percent >= 1)
   
   scutoidsplot<-ggplot(countdf, aes(x = edgesA, y = edgesB, label=count))+
-    geom_count(shape = "square", aes(color= percent,size=10))+
-    xlab("Edges on apical surface")+ylab("Edges on basal surface")+
-    ggtitle("Polygon class of apical and basal surfaces")+
-    guides(colour = "colorbar", size = "none")+
-    labs(color = "Percentages")+
-    scale_size_area(max_size = 70)+
-     #geom_label()+
-    #scale_color_gradient(low = "yellow", high = "blue") +
-    scale_color_viridis(option = "D",direction = -1, limits = c(0,30)) +
-    xlim(4,8) +
-    ylim(4,8)
+ #   geom_count(shape = "square", aes(color= percent,size=10))+
+ # xlab("Edges on apical surface")+ylab("Edges on basal surface")+
+ # ggtitle("Polygon class of apical and basal surfaces")+
+ # guides(colour = "colorbar", size = "none")+
+ # labs(color = "Percentages")+
+ # scale_size_area(max_size = 70)+
+ #  #geom_label()+
+ # #scale_color_gradient(low = "yellow", high = "blue") +
+ # scale_color_viridis(option = "D",direction = -1, limits = c(0,30)) +
+ # xlim(4,8) +
+ # ylim(4,8)
+ #  
+  geom_point(aes(color = percent), shape = 15, size=25) + # Square shape (15), size mapped to avg_count
+    scale_color_viridis_c(
+      option = "D",
+      direction = -1,
+      limits = c(0, 35),
+      name = "Percentages"
+    ) +
+    scale_size_continuous(range = c(3, 9), guide = "none") + # Controlled size range
+    scale_x_continuous(
+      breaks = c(3, 4, 5, 6, 7, 8, 9),  # Custom x-axis ticks
+      limits = c(3, 9.5),                 # Explicit x-axis limits
+      minor_breaks = seq(3, 9, by = 1)   # Minor breaks for grid lines at each unit
+    ) +
+    scale_y_continuous(
+      breaks = c(3, 4, 5, 6, 7, 8, 9),  # Custom y-axis ticks
+      limits = c(3, 9),                 # Explicit y-axis limits
+      minor_breaks = seq(3, 9, by = 1)   # Minor breaks for grid lines at each unit
+    ) +
+    labs(
+      title = paste("Average number of edges at iteration",it),
+      x = "Edges number on Apical Surface",
+      y = "Edges number on Basal Surface"
+    ) +
+    #xlim(2.5, 9.5) +
+    #ylim(2.5, 9.5) +
+    theme_minimal(base_size = 14) +
+    theme(
+      plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+      axis.title = element_text(size = 14),
+      axis.text = element_text(size = 12),
+      panel.grid.major = element_line(color = "gray90"),
+      panel.grid.minor = element_blank(),
+      legend.title = element_text(size = 14),
+      legend.text = element_text(size = 12),
+      legend.position = "right"
+    )
   show(scutoidsplot)
   
   }
@@ -693,27 +730,31 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 1
 #   # ylim(min(histdf_avcount$edgesB)-0.5, max(histdf_avcount$edgesB)-0.5)
   
   scutoidsplot <- ggplot(histdf_avcount, aes(x = edgesA, y = edgesB, label = avg_count)) +
-    geom_point(aes(color = avg_count, size = avg_count), shape = 15, size=30) + # Square shape (15), size mapped to avg_count
+    geom_point(aes(color = avg_count), shape = 15, size=25) + # Square shape (15), size mapped to avg_count
     scale_color_viridis_c(
       option = "D",
       direction = -1,
       limits = c(0, 35),
       name = "Percentages"
     ) +
-    scale_size_continuous(range = c(3, 12), guide = "none") + # Controlled size range
+    scale_size_continuous(range = c(3, 9), guide = "none") + # Controlled size range
+    scale_x_continuous(
+      breaks = c(3, 4, 5, 6, 7, 8, 9),  # Custom x-axis ticks
+      limits = c(3, 9.5),                 # Explicit x-axis limits
+      minor_breaks = seq(3, 9, by = 1)   # Minor breaks for grid lines at each unit
+    ) +
+    scale_y_continuous(
+      breaks = c(3, 4, 5, 6, 7, 8, 9),  # Custom y-axis ticks
+      limits = c(3, 9),                 # Explicit y-axis limits
+      minor_breaks = seq(3, 9, by = 1)   # Minor breaks for grid lines at each unit
+    ) +
     labs(
       title = paste("Average number of edges at iteration",it),
       x = "Edges number on Apical Surface",
       y = "Edges number on Basal Surface"
     ) +
-    xlim(3, 9) +
-    ylim(3, 9) +
-    #geom_text(
-     # aes(label = round(avg_count, 1)),
-    #  color = "white",
-    #  size = 4,
-     # fontface = "bold"
-    #) + # Add text labels inside the squares
+    #xlim(2.5, 9.5) +
+    #ylim(2.5, 9.5) +
     theme_minimal(base_size = 14) +
     theme(
       plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
@@ -725,7 +766,6 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 1
       legend.text = element_text(size = 12),
       legend.position = "right"
     )
-  
   show(scutoidsplot)
   
   output_file <- paste("Edges at iteration",it)
