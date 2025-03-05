@@ -20,7 +20,9 @@ dependencies <- c(
   "plotly",
   "foreach",
   "doParallel",
-  "viridis")
+  "viridis",
+  "svglite",
+  "nls.multstart")
 
 for(dep in dependencies){
   if(!require(dep, character.only = TRUE)){
@@ -40,7 +42,7 @@ params = list(
   seed = 1, # randomness
   n_steps = 50, # simulation steps
   n_cells = 100, # number of cells
-  n_layers = 10, # numbers of layers (min 3)
+  n_layers = 3, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
   ratio_rad = 2.5, # ratio between apical and basal radius 
   cyl_length = 20, # cylinder length
@@ -77,7 +79,7 @@ hist_energy = result_alg$energy_evolution
 Load previous results. Edit *fileName*. ATTENTION: the dataframe *simulation* might be overwritten.
 
 ```{r}
-fileName <- "results/static/results_simulation_25_01_31.RData"
+fileName <- "results/static/results_simulation_25_03_05_1.RData"
 
 # DO NOT MODIFY
 PATH_FUNCTIONS = "tubular_simulations_source/save_simulation_results.R"
@@ -140,7 +142,7 @@ PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
 # Percentages of cells depending on the number of edges
 points <- filter(result_alg$points_evolution, Iteration == selectedIteration)
-scutoids_analysis_oneiter(points$x,points$y,(parameters$ratio_rad)*points$x,points$y,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length)
+scutoids_analysis_oneiter(points$x,points$y,(parameters$ratio_rad)*points$x,points$y,ratio=parameters$ratio_rad,ap_rad = parameters$apical_rad, n = parameters$n_cells,cylen = parameters$cyl_length,it=selectedIteration)
 # Average number of neighbors 
 edgear <- funaux2simDOUBLE(result_alg$points_evolution,ps=1,n=parameters$n_cells, cylen = parameters$cyl_length,apical_radius = parameters$apical_rad,it=parameters$n_steps)
 #apical area
@@ -200,7 +202,7 @@ par_parameters <- par_results[[1,2]]
 Load pre-existing results. Edit the file name and the number *N_SIM* of simulations to import. ATTENTION: the dataframe *par_results* might be overwritten.
 
 ```{r}
-fileName <- "results/parallel/results_simulation_25_01_31_"
+fileName <- "results/parallel/results_simulation_25_02_03_"
 N_SIM = 10 
 
 # DO NOT MODIFY
