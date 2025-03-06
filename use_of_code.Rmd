@@ -130,7 +130,7 @@ plot_energy_decomp(hist_layers)
 hist_layers_firstlast <- energy_analysis_nobend(histpts = hist_points, it = parameters$n_steps, n = parameters$n_cells, Lay = parameters$n_layers)
 ```
 
-### b/ Typology
+### b/ Topology
 
 Number of edges and percentage of scutoids. Select the iteration you want to study by editing *selectedIteration*.
 
@@ -254,7 +254,7 @@ enerhist_average <- energy_analisis_averages_par(par_results, it = par_parameter
 #adjsim(par_results,nsim=N_SIM,it=par_parameters$n_steps)
 ```
 
-### b/ Typology
+### b/ Topology
 
 Number of edges and relative cell area in the apical and basal area. Edit *selectedIteration* to select the iteration. The first one is 0 and the last one is *par_parameters\$n_steps*.
 
