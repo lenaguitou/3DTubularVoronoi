@@ -1,8 +1,8 @@
 
 # 3DTubularVoronoi #
 
-Author: Eloy Tomás Serrano Andrés and Léna Guitou \
-Last update: 02/2025
+Author: Léna Guitou and Eloy Tomás Serrano Andrés \
+Last update: 04/2025
 
 Tested on R version 4.3.1., RStudio version 2023.06.1+524. and Mathematica version 12
 
