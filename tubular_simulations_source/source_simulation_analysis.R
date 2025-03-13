@@ -76,7 +76,7 @@ funaux2simDOUBLE<-function(ptsord, n = 100, ps = 100, Ratio = 2.5,cylen,apical_r
   return(list(edgearA,edgearB))
 }
 
-stationarylewisBasal<-function(edgear,it){
+stationarylewisBasal<-function(edgear,it,nsim=1){
   #First execute ord function (for results) and funaux2 with the data, then this function makes the plots.
 
   # plotareaedges <- ggplot(edgear, aes(x = edges, y = area, colour = area))+
@@ -172,8 +172,13 @@ stationarylewisBasal<-function(edgear,it){
   
   show(histedges)
   
-  output_file1 <- paste("Number of neighbors basal iteration",it)
-  output_file2 <- paste("Cells area basal iteration",it)
+  if(nsim!=1){
+    output_file1 <- paste("results/Number of neighbors basal iteration",it, "_Average",nsim,"sim.")
+    output_file2 <- paste("results/Cells area basal iteration",it, "_Average",nsim,"sim.")
+  }else{
+    output_file1 <- paste("results/Number of neighbors basal iteration",it)
+    output_file2 <- paste("results/Cells area basal iteration",it)
+  }
   
   # Save the plot
   ggsave(
@@ -200,7 +205,7 @@ stationarylewisBasal<-function(edgear,it){
   
 }
 
-stationarylewisApical<-function(edgear,it){
+stationarylewisApical<-function(edgear,it,nsim=1){
   #First execute ord function (for results) and funaux2 with the data, then this function makes the plots.
   
   # plotareaedges <- ggplot(edgear, aes(x = edges, y = area, colour = area))+
@@ -297,8 +302,14 @@ stationarylewisApical<-function(edgear,it){
   
   show(histedges)
   
-  output_file1 <- paste("Number of neighbors apical iteration",it)
-  output_file2 <- paste("Cells area apical iteration",it)
+  if(nsim!=1){
+    output_file1 <- paste("results/Number of neighbors apical iteration",it, "_Average",nsim,"sim.")
+    output_file2 <- paste("results/Cells area apical iteration",it, "_Average",nsim,"sim.")
+  }else{
+    output_file1 <- paste("results/Number of neighbors apical iteration",it)
+    output_file2 <- paste("results/Cells area apical iteration",it)
+  }
+ 
   
   # Save the plot
   ggsave(
@@ -378,7 +389,7 @@ adjsim<-function(results,nsim=100,it=150){
   
   coefest<-data.frame(a=double(nsim),b=double(nsim),c=double(nsim))
   for (i in 1:nsim) {
-    coefest[i,c(1,2,3)]<-regnls2(results[[i,1]]$energy_evolution,it=it)
+    coefest[i,c(1,2,3)]<-regnls2(results[[i,1]]$energy_evolution$Total,it=it)
   }
   a<-mean(coefest$a)
   b<-mean(coefest$b)
@@ -666,7 +677,7 @@ scutoids_analysis_stationary <- function(histpts, rect1, rect2, n = 100){
   return(histdf_avgcount)
 }
 
-scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 100, it = 150, cylen,ap_rad){
+scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 100, it = 150, cylen,ap_rad,nsim=1){
   #We define the vertices of the plane
   xmin <- 0
   xmax <- 2*pi*ap_rad
@@ -768,8 +779,8 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 1
     )
   show(scutoidsplot)
   
-  output_file <- paste("Edges at iteration",it)
-  
+  output_file <- paste("results/Edges at iteration",it, "_Average",nsim,"sim.")
+
   # Save the plot
   ggsave(
     filename = output_file,    # File name
@@ -855,11 +866,12 @@ energy_analisis_1sim <- function(histpts, it = 150, lay = 10, n =100,rad_coef,Ra
     pts <- filter(histpts, Iteration==(i-1))
     histener[i,c(2,3,4,5)] <- energy_iteration(pts$x,pts$y, n = n, Lay = lay,rad_coef = rad_coef,Radius = Radius,cylen = cylen,lambda=lambda,gamma=gamma,s0=s0)
   }
+  
   return(histener)
 }
 
 
-energy_analisis_averages_par <- function(results, it = 150, lay = 10, n = 100,rad_coef,cylen,Radius,lambda,gamma,s0) {
+energy_analisis_averages_par <- function(results, it = 150, lay = 10, n = 100,rad_coef,cylen,Radius,lambda,gamma,s0,nsim=1) {
   # Number of simulations
   N_SIM <- nrow(results)
   
@@ -871,7 +883,7 @@ energy_analisis_averages_par <- function(results, it = 150, lay = 10, n = 100,ra
   # Set up parallel backend (adjust the number of cores as necessary)
   num_cores <- detectCores() - 1  # Leave one core free for other processes
   cl <- makeCluster(num_cores)
-  registerDoParallel(cl)
+  registerDoParallel(cl) 
   
   # Use foreach for parallel execution
   energy_results <- 
@@ -953,7 +965,7 @@ energy_analisis_averages_par <- function(results, it = 150, lay = 10, n = 100,ra
     
   show(p)
   
-  output_file <- "Average total energies.svg"
+  output_file <- paste0("results/Energies_Average",N_SIM,"sim..svg")
   
   # Save the plot
   ggsave(

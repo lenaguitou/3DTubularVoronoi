@@ -2,10 +2,10 @@ library(deldir)
 library(dplyr)
 
 
-save_tessellation_layers <- function(pts,
+save_tessellation_layers_oneit <- function(pts,
                                      n = 100, RadiusA = 5/(2*pi), Ratio = 2.5,
                                      cyl_length = 20,
-                                     Layers = 10, filename){
+                                     Layers = 10,it=1){
   RadiusB <- Ratio*RadiusA
   cyl_width_A <- 2*pi*RadiusA
   cyl_width_B <- 2*pi*RadiusB
@@ -33,7 +33,7 @@ save_tessellation_layers <- function(pts,
                    vert1y = double(), vert2y = double(), vert3y = double(),
                    vert4y = double(), vert5y = double(), vert6y = double(), 
                    vert7y = double(), vert8y = double(), vert9y = double(), 
-                   vert10y = double(), vert11y = double())
+                   vert10y = double(), vert11y = double(),iteration=integer())
   
   for (j in 1:Layers) {
     tes <- deldir(pts$x*(rad[[j]]/rad[[1]]),pts$y,rw=rec[[j]])
@@ -48,12 +48,11 @@ save_tessellation_layers <- function(pts,
       df[lon+i,6] <- length(tiles[[i]][[3]])
       df[lon+i,7:(6+length(tiles[[i]][[3]]))] <- tiles[[i]][[3]]
       df[lon+i,18:(17+length(tiles[[i]][[4]]))] <- tiles[[i]][[4]]
+      df[lon+i,29] <- it
     }
     gc()
     rm(tiles,tes)
   }
-  print(paste0("Results saved successfully in path: ", filename))
-  write.table(df, file = filename, sep = ",", row.names = FALSE)
   return(df)
 }
 
@@ -109,6 +108,24 @@ save_tessellation_layers_bending <- function(pts,
   }
   
   # write.csv2(df, file = "output_databending.csv")
-  write.table(df, file = filename, sep = ",", row.names = FALSE)
+  #write.table(df, file = filename, sep = ",", row.names = FALSE)
   return(df)
+}
+
+save_tessellation_layers <- function(pts_all,n = 100, RadiusA = 5/(2*pi), Ratio = 2.5,
+                                     cyl_length = 20,
+                                     Layers = 10,it = 100){
+  df_all <- list()
+  
+  for(i in 1:it){
+    pts = filter(pts_all,Iteration==i)
+    df_all[[i]] <- save_tessellation_layers_oneit(pts = pts,n=n,RadiusA = RadiusA, Ratio = Ratio,cyl_length=cyl_length,Layers=Layers,it=i)
+  }
+  df_all <- bind_rows(df_all) 
+  filename <- paste0("results/saved_tessellation.csv")
+  
+  print(paste0("Results saved successfully in path: ", filename))
+  write.table(df_all, file = filename, sep = ",", row.names = FALSE)
+  
+  return(df_all)
 }

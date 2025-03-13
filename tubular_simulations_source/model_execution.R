@@ -28,7 +28,6 @@ perform_simulations<-function(
   
   if (algorithm=="static") {
     result_alg <- do.call(metropolisad, parameters)
-
   }
   else if (algorithm=="bending") {
     result_alg <- do.call(metropolisad_ben, parameters)

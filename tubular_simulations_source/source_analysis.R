@@ -346,28 +346,67 @@ plot_energyss<-function(enerhist,total=FALSE){
   string <- "Average energy per cell"}
   else{string <- "Total energy"}
   
-  p<-ggplot(enerhist, aes(x = Iteration))+
-    geom_line(aes(y = toten, colour = "Total energy"))+
-    geom_line(aes(y= tenen, colour = "Adhesion"))+
-    geom_line(aes(y = elen, colour = "Elastic"))+
-    geom_line(aes(y = conten, colour = "Contractility"))+
-    ylim(0, max(enerhist$toten) + 0.1 * max(enerhist$toten))+
-    # geom_line(aes(x = Layer, y = Bending_energy, colour = "Bending energy"))+
-    labs(title =  string,
-         x = "Iteration", y = string,
+  # p<-ggplot(enerhist, aes(x = Iteration))+
+  #   geom_line(aes(y = toten, colour = "Total energy"))+
+  #   geom_line(aes(y= tenen, colour = "Adhesion"))+
+  #   geom_line(aes(y = elen, colour = "Elastic"))+
+  #   geom_line(aes(y = conten, colour = "Contractility"))+
+  #   ylim(0, max(enerhist$toten) + 0.1 * max(enerhist$toten))+
+  #   # geom_line(aes(x = Layer, y = Bending_energy, colour = "Bending energy"))+
+  #   labs(title =  string,
+  #        x = "Iteration", y = string,
+  #        color = "Energy type") +
+  #   scale_colour_manual("",
+  #                       breaks = c("Total energy",
+  #                                  "Adhesion",
+  #                                  "Elastic",
+  #                                  "Contractility"),
+  #                       # "Bending energy"),
+  #                       values = c("red",
+  #                                  "blue",
+  #                                  "darkgreen",
+  #                                  "purple"))
+
+  p <- ggplot(enerhist, aes(x = Iteration)) +
+    geom_line(aes(y = toten, colour = "Total energy")) +
+    geom_line(aes(y = tenen, colour = "Adhesion")) +
+    geom_line(aes(y = elen, colour = "Elastic")) +
+    geom_line(aes(y = conten, colour = "Contractility")) +
+    ylim(0, max(enerhist$toten) + 0.1 * max(enerhist$toten)) +
+    labs(title = string,
+         x = "Iteration", 
+         y = string,
          color = "Energy type") +
     scale_colour_manual("",
-                        breaks = c("Total energy",
-                                   "Adhesion",
-                                   "Elastic",
-                                   "Contractility"),
-                        # "Bending energy"),
-                        values = c("red",
-                                   "blue",
-                                   "darkgreen",
-                                   "purple"))
-  # "orange",
+                        breaks = c("Total energy", "Adhesion", "Elastic", "Contractility"),
+                        values = c("red", "blue", "darkgreen", "purple")) +
+    theme_minimal(base_size = 14) +
+    theme(
+      plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(size = 12, hjust = 0.5),
+      axis.title = element_text(size = 14),
+      axis.text = element_text(size = 12),
+      legend.title = element_text(size = 14),
+      legend.text = element_text(size = 12),
+      legend.position = "top",
+      legend.key.size = unit(1, "lines")
+    )
+  
    
+  output_file <- paste0("results/Energies.svg")
+  
+  # Save the plot
+  ggsave(
+    filename = output_file,    # File name
+    plot = p,                  # ggplot object
+    device = "svg",            # File format
+    width = 8,                 # Width in inches
+    height = 6,                # Height in inches
+    dpi = 300                  # Resolution (optional for SVG)
+  )
+  
+  # Confirmation
+  print(paste0("Plot saved:", output_file))
   
   show(p)
 }
