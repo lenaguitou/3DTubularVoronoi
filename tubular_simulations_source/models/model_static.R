@@ -66,6 +66,32 @@ tesellation_energy_N<-function(xt, yt, A0, rec, rad, gamad, lamad, n_cells, Laye
   return(sum(tesener)/Layer)
 }
 
+elastic_contractile_adhesion_energy <- function(xt, yt, A0, rec, rad, gamad, lamad, n_cells, Layer, s0_ratio) {
+  
+  energy_components <- sapply(1:Layer, function(i){
+    tesel <- deldir(xt * (rad[[i]] / rad[[1]]), yt, rw = rec[[i]])
+    tilest <- tile.list(tesel)[(n_cells + 1):(2 * n_cells)]
+    perims <- (tilePerim(tilest)$perimeters) / sqrt(A0)
+    areas <- sapply(tilest, function(x) { x$area }) / A0
+    gam <- gamad * exp((1 - (rad[[i]] / rad[[1]])) / s0_ratio)
+    
+    # Calculate energy components
+    elastic_energy <- sum((areas - 1)^2)/Layer
+    contractile_energy <- sum((gam / 2) * (perims^2))/Layer
+    adhesion_energy <- sum(lamad * perims)/Layer
+    
+    # Return the energy components
+    return(c(elastic_energy, contractile_energy, adhesion_energy))
+  })
+  
+  # Return the sum of energy components for each layer
+  return(list(
+    ElasticEnergy = sum(energy_components[1, ]),
+    ContractileEnergy = sum(energy_components[2, ]),
+    AdhesionEnergy = sum(energy_components[3, ])
+  ))
+}
+
 choice_metropolis<-function(delta,beta){
   p<-numeric()
   if(delta<=0){p<-1}else if(-delta*beta==0){p<-0}else{p<-exp(-delta*beta)}
@@ -159,7 +185,7 @@ nu_sq <- function(points, rec, RadB= 2.5*5/(2*pi) , n_cells=100){
 metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
                        apical_rad = 5/(2*pi), ratio_rad = 2.5, cyl_length = 20,
                        gamma = 0.15, lambda = 0.04, beta = 100, s0_ratio=1){
-
+  
   #We define our variables
   
   RadiusB <- ratio_rad*apical_rad
@@ -195,14 +221,16 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
   
   points <- data.frame(x=x,y=y)
   pointsinit <- points
-  energytesel <- tesellation_energy_N(points$x, points$y, A0 = Am, rec , rad,
-                                      gamad = gamma, lamad = lambda, n_cells, Layer = n_layers, s0_ratio = s0_ratio)
-  
-  energyinit <- energytesel
+  energyinit <- tesellation_energy_N(points$x, points$y, A0 = Am, rec , rad,
+                                     gamad = gamma, lamad = lambda, n_cells, Layer = n_layers, s0_ratio = s0_ratio)
+  energiesinit <- elastic_contractile_adhesion_energy(points$x, points$y, A0 = Am, rec , rad,
+                                                      gamad = gamma, lamad = lambda, n_cells, Layer = n_layers, s0_ratio = s0_ratio)
   
   #We create the variables to store the results
-  energhist <- data.frame(Iteration=numeric(n_steps), energy=numeric(n_steps))
+  energhist <- data.frame(Iteration=numeric(n_steps), Total=numeric(n_steps),Elastic=numeric(n_steps),Contractile=numeric(n_steps),Adhesion=numeric(n_steps))
+
   energhist[1,c(1,2)] <- c(0,energyinit)
+  energhist[1,c(3,4,5)] <- energiesinit
   
   histpts <- data.frame(x=numeric(3*n_cells*n_steps),
                         y=numeric(3*n_cells*n_steps),
@@ -211,7 +239,8 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
   histpts[1:(3*n_cells),c(1,2)] <- points
   histpts[1:(3*n_cells),3] <- 0
   points2 <- data.frame(x=x,y=y)
-  energytesel
+  
+  energytesel <- energyinit
   
   #Start of the loop
   for (j in 1:n_steps) {
@@ -223,14 +252,17 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
       cond <- c==1
       if(cond){
         points<-points2
-        energytesel<-energytesel2
+        energytesel <- energytesel2
+        energiestesel <- elastic_contractile_adhesion_energy(points$x, points$y, A0 = Am, rec , rad,
+                                                             gamad = gamma, lamad = lambda, n_cells, Layer = n_layers, s0_ratio = s0_ratio)
       }
     }
     gc()
     histpts[(j*3*n_cells+1):(j*3*n_cells+3*n_cells),c(1,2)] <- points
     histpts[(j*3*n_cells+1):(j*3*n_cells+3*n_cells),3]<-j
-    energhist[j+1,c(1,2)]<-c(j,energytesel)
-    energytesel
+    energhist[j+1,c(1,2)] <- c(j,energytesel)
+    energhist[j+1,c(3,4,5)] <- energiestesel
+
     print(paste0("step ",j," done"))
   }
   # nu2 <- nu_sq(points = points, rec = rec, n_cells = 100)
