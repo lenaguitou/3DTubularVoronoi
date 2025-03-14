@@ -1,7 +1,6 @@
 library(foreach)
 library(doParallel)
 source("tubular_simulations_source/models/model_static.R")
-source("tubular_simulations_source/models/model_bending.R")
 source("tubular_simulations_source/save_simulation_results.R")
 
 perform_simulations<-function(
