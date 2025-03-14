@@ -1,6 +1,7 @@
 library(foreach)
 library(doParallel)
 source("tubular_simulations_source/models/model_static.R")
+source("tubular_simulations_source/models/model_bending.R")
 source("tubular_simulations_source/save_simulation_results.R")
 
 perform_simulations<-function(
@@ -16,7 +17,7 @@ perform_simulations<-function(
   #     the parameters from the file 
   #     "tubular_simulations_source/models/model_parameters.R"
   #   - algorithm. String with the algorithm that we want to use. It can be 
-  #     "static" or else it will fail.
+  #     whether "static" or "bending", or else it will fail.
   #   - return_params. If it is set to TRUE, it returns a list with the 
   #     results, the parameters, and the algorithm used. If FALSE (by default),
   #     it will return just the results. It is convenient to set it to TRUE if 
@@ -27,9 +28,13 @@ perform_simulations<-function(
   
   if (algorithm=="static") {
     result_alg <- do.call(metropolisad, parameters)
+  }
+  else if (algorithm=="bending") {
+    result_alg <- do.call(metropolisad_ben, parameters)
+  }
   else{
     stop("Introduce a valid value for parameter algorithm: 
-         'static'")
+         'static' or 'bending'")
   }
   results_with_params = list(results=result_alg,
                              parameters=parameters,
