@@ -199,7 +199,7 @@ par_parameters <- par_results[[1,2]]
 Load pre-existing results. Edit the file name and the number *N_SIM* of simulations to import. ATTENTION: the dataframe *par_results* might be overwritten.
 
 ```{r}
-fileName <- "results/parallel/results_simulation_25_12_03_"
+fileName <- "results/parallel/results_simulation_25_03_12_"
 N_SIM = 10 
 
 # DO NOT MODIFY
