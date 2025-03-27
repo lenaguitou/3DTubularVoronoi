@@ -4,7 +4,7 @@
 Author: Léna Guitou and Eloy Tomás Serrano Andrés \
 Last update: 04/2025
 
-Tested on R version 4.4.3., RStudio version 2024.12.1. and Mathematica version 12/Wolfram Player version 14.2
+Tested on R version 4.4.3., RStudio version 2024.12.1. and Mathematica version 13.2/Wolfram Player version 14.2
 
 
 ## Installation ##
