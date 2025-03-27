@@ -1,6 +1,6 @@
 library(foreach)
 library(doParallel)
-source("source/models/model_static.R")
+source("source/model_static.R")
 source("source/save_simulation_results.R")
 
 perform_simulations<-function(

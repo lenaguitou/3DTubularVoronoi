@@ -35,17 +35,17 @@ save_results <- function(simulation,save_parallel=FALSE) {
   date <- format(Sys.Date(), "%y_%m_%d")
   
   # create directories
-  if (!dir.exists(paste0("results/", algorithm))) {
-    dir.create(paste0("results/", algorithm), recursive = TRUE)
+  if (!dir.exists(paste0("results/single"))) {
+    dir.create(paste0("results/single"), recursive = TRUE)
   }
   
   # set filename
-  filename <- paste0("results/", algorithm, "/results_simulation_", date, ".RData")
+  filename <- paste0("results/single/results_simulation_", date, ".RData")
   
   # verify if file already exists
   counter <- 1
   while (file.exists(filename)) {
-    filename <- paste0("results/", algorithm, "/results_simulation_", date, "_", counter, ".RData")
+    filename <- paste0("results/single/results_simulation_", date, "_", counter, ".RData")
     counter <- counter + 1
   }
   
