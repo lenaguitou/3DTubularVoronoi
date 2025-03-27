@@ -173,11 +173,11 @@ stationarylewisBasal<-function(edgear,it,nsim=1){
   show(histedges)
   
   if(nsim!=1){
-    output_file1 <- paste("results/Number of neighbors basal iteration",it, "_Average",nsim,"sim.")
-    output_file2 <- paste("results/Cells area basal iteration",it, "_Average",nsim,"sim.")
+    output_file1 <- paste("results/figures/Number of neighbors basal iteration",it, "_Average",nsim,"sim.")
+    output_file2 <- paste("results/figures/Cells area basal iteration",it, "_Average",nsim,"sim.")
   }else{
-    output_file1 <- paste("results/Number of neighbors basal iteration",it)
-    output_file2 <- paste("results/Cells area basal iteration",it)
+    output_file1 <- paste("results/figures/Number of neighbors basal iteration",it)
+    output_file2 <- paste("results/figures/Cells area basal iteration",it)
   }
   
   # Save the plot
@@ -303,11 +303,11 @@ stationarylewisApical<-function(edgear,it,nsim=1){
   show(histedges)
   
   if(nsim!=1){
-    output_file1 <- paste("results/Number of neighbors apical iteration",it, "_Average",nsim,"sim.")
-    output_file2 <- paste("results/Cells area apical iteration",it, "_Average",nsim,"sim.")
+    output_file1 <- paste("results/figures/Number of neighbors apical iteration",it, "_Average",nsim,"sim.")
+    output_file2 <- paste("results/figures/Cells area apical iteration",it, "_Average",nsim,"sim.")
   }else{
-    output_file1 <- paste("results/Number of neighbors apical iteration",it)
-    output_file2 <- paste("results/Cells area apical iteration",it)
+    output_file1 <- paste("results/figures/Number of neighbors apical iteration",it)
+    output_file2 <- paste("results/figures/Cells area apical iteration",it)
   }
  
   
@@ -779,7 +779,7 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 1
     )
   show(scutoidsplot)
   
-  output_file <- paste("results/Edges at iteration",it, "_Average",nsim,"sim.")
+  output_file <- paste("results/figures/Edges at iteration",it, "_Average",nsim,"sim.")
 
   # Save the plot
   ggsave(
@@ -965,7 +965,7 @@ energy_analisis_averages_par <- function(results, it = 150, lay = 10, n = 100,ra
     
   show(p)
   
-  output_file <- paste0("results/Energies_Average",N_SIM,"sim..svg")
+  output_file <- paste0("results/figures/Energies_Average",N_SIM,"sim..svg")
   
   # Save the plot
   ggsave(

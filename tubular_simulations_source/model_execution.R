@@ -1,7 +1,7 @@
 library(foreach)
 library(doParallel)
 source("tubular_simulations_source/models/model_static.R")
-#source("tubular_simulations_source/models/model_bending.R")
+source("tubular_simulations_source/models/model_bending.R")
 source("tubular_simulations_source/save_simulation_results.R")
 
 perform_simulations<-function(
@@ -29,9 +29,9 @@ perform_simulations<-function(
   if (algorithm=="static") {
     result_alg <- do.call(metropolisad, parameters)
   }
-  #else if (algorithm=="bending") {
-  #  result_alg <- do.call(metropolisad_ben, parameters)
-  #}
+  else if (algorithm=="bending") {
+    result_alg <- do.call(metropolisad_ben, parameters)
+  }
   else{
     stop("Introduce a valid value for parameter algorithm: 
          'static' or 'bending'")

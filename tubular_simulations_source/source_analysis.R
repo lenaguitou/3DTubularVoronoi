@@ -325,26 +325,25 @@ energy_analisis_1sim <- function(histpts, it = 150, lay = 10, n =100,total=FALSE
   histener<-data.frame(Iteration = 0:it, elen = double(it+1), tenen = double(it+1),
                        conten = double(it+1), toten = double(it+1))
   #print(head(histpts))
-  
   if(total==FALSE){
     for (i in 1:(it+1)) {
        pts <- filter(histpts, Iteration==(i-1))
-       histener[i,c(2,3,4,5)] <- energy_iteration(pts$x,pts$y, n = n, Lay = lay)
-    }}
+       histener[i,c(2,3,4,5)] <- energy_iteration(pts$x,pts$y, n = n, Lay = lay)}}
   else{
     for (i in 1:(it+1)) {
       pts <- filter(histpts, Iteration==(i-1))
-      histener[i,c(2,3,4,5)] <- energy_iteration_total(pts$x,pts$y, n = n, Lay = lay)
-    }
-  }  
+      histener[i,c(2,3,4,5)] <- energy_iteration_total(pts$x,pts$y, n = n, Lay = lay)}}  
   return(histener)
 }
 
 plot_energyss<-function(enerhist,total=FALSE){
   
   if(total==FALSE){
-  string <- "Average energy per cell"}
-  else{string <- "Total energy"}
+  string <- "Average energy per cell"
+  output_file <- paste0("results/figures/Energies per cell.svg")}
+  else{
+  string <- "Total energy"
+  output_file <- paste0("results/figures/Total Energies.svg")}
   
   # p<-ggplot(enerhist, aes(x = Iteration))+
   #   geom_line(aes(y = toten, colour = "Total energy"))+
@@ -393,7 +392,7 @@ plot_energyss<-function(enerhist,total=FALSE){
     )
   
    
-  output_file <- paste0("results/Energies.svg")
+ 
   
   # Save the plot
   ggsave(
