@@ -44,8 +44,8 @@ params = list(
   n_cells = 200, # number of cells
   n_layers = 10, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
-  ratio_rad = 3, # ratio between apical and basal radius 
-  cyl_length = 20, # cylinder length
+  ratio_rad = 3, # ratio between apical and basal radius
+  cyl_length = 15, # cylinder length
   gamma = 0.15, # contractility    0.15 (hexagonal) 0.04 (soft)
   lambda = 0.04,  # adhesion  0.04 (heaxgonal) 0 (soft)
   #kappa = 1 cause adimentionality (elasticity)
@@ -59,7 +59,7 @@ params = list(
 Execute a single simulation
 
 ```{r}
-PATH_MODEL = "tubular_simulations_source/model_execution.R"
+PATH_MODEL = "source/model_execution.R"
 source(PATH_MODEL)
 start.time <- Sys.time()
 simulation <- perform_simulations(algorithm="static",parameters=params) 
@@ -79,10 +79,10 @@ hist_energy = result_alg$energy_evolution
 Load previous results. Edit *fileName*. ATTENTION: the dataframe *simulation* might be overwritten.
 
 ```{r}
-fileName <- "results/static/results_simulation_25_03_22.RData"
+fileName <- "results/single/results_simulation_25_03_27.RData"
 
 # DO NOT MODIFY
-PATH_FUNCTIONS = "tubular_simulations_source/save_simulation_results.R"
+PATH_FUNCTIONS = "source/save_simulation_results.R"
 source(PATH_FUNCTIONS)
 simulation <- load_results(fileName)
 result_alg <- simulation$results
@@ -98,7 +98,7 @@ Save the executed or loaded simulation. ATTENTION: "saved_tesselations.csv" will
 
 ```{r}
 # DO NOT MODIFY
-PATH_FUNCTIONS = "tubular_simulations_source/save_utils.R"
+PATH_FUNCTIONS = "source/save_utils.R"
 source(PATH_FUNCTIONS)
 pts_info = save_tessellation_layers(result_alg[[1]], n = parameters$n_cells, RadiusA =parameters$apical_rad, Ratio = parameters$ratio_rad,cyl_length = parameters$cyl_length, Layers = parameters$n_layers,it=parameters$n_steps)    
 ```
@@ -110,7 +110,7 @@ pts_info = save_tessellation_layers(result_alg[[1]], n = parameters$n_cells, Rad
 Plot the energies over time, per cell or per layer. To note that *hist_energy* is equivalent to *enerhist_total\$toten*.
 
 ```{r}
-PATH_ANALYSIS = "tubular_simulations_source/source_analysis.R"
+PATH_ANALYSIS = "source/source_analysis.R"
 source(PATH_ANALYSIS)
 # Total energy of the tissue
 enerhist_total <- energy_analisis_1sim(hist_points, it = parameters$n_steps, lay = parameters$n_layers, n = parameters$n_cells,total=TRUE)
@@ -133,7 +133,7 @@ Number of edges and percentage of scutoids. Select the iteration you want to stu
 selectedIteration =  parameters$n_steps
 
 # DO NOT MODIFY
-PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
+PATH_ANALYSIS = "source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
 # Percentages of cells depending on the number of edges
 points <- filter(result_alg$points_evolution, Iteration == selectedIteration)
@@ -159,7 +159,7 @@ Execute multiple simulations at the same time using different seeds (random init
 ```{r}
 N_SIM = 5 # number of simulations with different seeds
 parameters_list = list(
-  n_steps = 5, # simulation steps
+  n_steps = 3, # simulation steps
   n_cells = 10, # number of cells
   n_layers = 5, # numbers of layers (min 3)
   apical_rad = 4/(2*pi), # apical radius
@@ -173,13 +173,13 @@ parameters_list = list(
   )
 
 #DO NOT MODIFY
-PATH_MODEL = "tubular_simulations_source/model_execution.R"
+PATH_MODEL = "source/model_execution.R"
 source(PATH_MODEL)
 N_CLUSTERS <- detectCores() - 1  # Leave one core free for other processes
 cl <- makeCluster(N_CLUSTERS) 
 registerDoParallel(cl)
 start_time <- Sys.time()
-log_file <- "simulation_log.txt"
+log_file <- "results/parallel/simulation_log.txt"
 writeLines("Parallel simulations - Tracking progress\n", log_file)
 par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopar% {
   params = c(seed = i,parameters_list)
@@ -199,11 +199,11 @@ par_parameters <- par_results[[1,2]]
 Load pre-existing results. Edit the file name and the number *N_SIM* of simulations to import. ATTENTION: the dataframe *par_results* might be overwritten.
 
 ```{r}
-fileName <- "results/parallel/results_simulation_25_03_25_"
+fileName <- "results/parallel/results_simulation_25_03_27_"
 N_SIM = 3
 
 # DO NOT MODIFY
-PATH_FUNCTIONS = "tubular_simulations_source/save_simulation_results.R"
+PATH_FUNCTIONS = "source/save_simulation_results.R"
 source(PATH_FUNCTIONS)
 par_results <- NULL 
 for(i in 1:N_SIM){
@@ -226,7 +226,7 @@ Save the tessellation of a selected simulation by editing *saveSimulation*. ATTE
 saveSimulation <- 2
 
 # DO NOT MODIFY
-PATH_FUNCTIONS = "tubular_simulations_source/save_utils.R"
+PATH_FUNCTIONS = "source/save_utils.R"
 source(PATH_FUNCTIONS)
 pts_info_par = save_tessellation_layers(par_results[[saveSimulation]]$points_evolution, n = par_parameters$n_cells, RadiusA =par_parameters$apical_rad, Ratio = par_parameters$ratio_rad,cyl_length =par_parameters$cyl_length, Layers = par_parameters$n_layers,it=par_parameters$n_steps)
 ```
@@ -238,7 +238,7 @@ pts_info_par = save_tessellation_layers(par_results[[saveSimulation]]$points_evo
 Average tissue energies.
 
 ```{r}
-PATH_ANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
+PATH_ANALYSIS = "source/source_simulation_analysis.R"
 source(PATH_ANALYSIS)
 # Average energies
 enerhist_average <- energy_analisis_averages_par(par_results, it = par_parameters$n_steps, lay = par_parameters$n_layers, n = par_parameters$n_cells,rad_coef = par_parameters$ratio_rad,Radius = par_parameters$apical_rad,cylen = par_parameters$cyl_length,gamma = par_parameters$gamma,lambda=par_parameters$lambda,s0 = par_parameters$s0_ratio)
@@ -254,7 +254,7 @@ Number of edges and relative cell area in the apical and basal area. Edit *selec
 selectedIteration =  par_parameters$n_steps
 
 # DO NOT MODIFY
-PATH_SIMANALYSIS = "tubular_simulations_source/source_simulation_analysis.R"
+PATH_SIMANALYSIS = "source/source_simulation_analysis.R"
 source(PATH_SIMANALYSIS)
 # Reorganize all the simulations by iteration
 resord <- ord(par_results, iter = par_parameters$n_steps, n=par_parameters$n_cells, sim = N_SIM)
