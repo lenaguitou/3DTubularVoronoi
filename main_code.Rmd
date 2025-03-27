@@ -156,36 +156,39 @@ scutoids_percr(hist_points,ratio=parameters$ratio_rad,ap_rad = parameters$apical
 
 Execute multiple simulations at the same time using different seeds (random initial conditions). Choose the number of simulations *N_SIM* and edit the list of parameters.
 
-```{r include=FALSE}
-N_SIM = 3 # number of simulations
-
-PATH_MODEL = "tubular_simulations_source/model_execution.R"
-source(PATH_MODEL)
-N_CLUSTERS <- detectCores() - 1  # Leave one core free for other processes
-cl <- makeCluster(N_CLUSTERS) 
-registerDoParallel(cl)
-start.time <- Sys.time()
-cat("Simulations start")
-par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopar% {
- params = list(
-  seed = i, # randomness
-  n_steps = 30, # simulation steps
-  n_cells = 100, # number of cells
+```{r}
+N_SIM = 5 # number of simulations with different seeds
+parameters_list = list(
+  n_steps = 5, # simulation steps
+  n_cells = 10, # number of cells
   n_layers = 5, # numbers of layers (min 3)
   apical_rad = 4/(2*pi), # apical radius
   ratio_rad = 3, # ratio between apical and basal radius 
-  cyl_length = 25, # cylinder length
+  cyl_length = 15, # cylinder length
   gamma = 0.15, #3  contractility
   lambda = 0.04, # adhesion 
   #kappa = 1 cause adimentionality (elasticity)
   beta = 100, #constant involved in jumps because of perturbations
   s0_ratio = 1 # characteristic ratio between the actual radius and apical radius
   )
-  do.call(perform_simulations,list(algorithm="static", parameters=params,save_parallel=TRUE))
-}
-end.time <- Sys.time()
-time.taken <- end.time - start.time
-print(paste("Execution Time:", round(as.numeric(time.taken, units="mins"), 2), "mins"))
+
+#DO NOT MODIFY
+PATH_MODEL = "tubular_simulations_source/model_execution.R"
+source(PATH_MODEL)
+N_CLUSTERS <- detectCores() - 1  # Leave one core free for other processes
+cl <- makeCluster(N_CLUSTERS) 
+registerDoParallel(cl)
+start_time <- Sys.time()
+log_file <- "simulation_log.txt"
+writeLines("Parallel simulations - Tracking progress\n", log_file)
+par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopar% {
+  params = c(seed = i,parameters_list)
+  # Run simulation
+  do.call(perform_simulations,list(algorithm="static", parameters=c(params,list(par=TRUE)),save_parallel=TRUE))}
+time_taken <- Sys.time()- start_time
+print(paste("Execution Time:", round(as.numeric(time_taken, units="mins"), 2), "mins"))
+execution_msg <- sprintf("Execution Time: %.2f mins\n", as.numeric(time_taken, units="mins"))
+cat(execution_msg, file=log_file, append=TRUE)
 stopCluster(cl)
 stopImplicitCluster()
 par_parameters <- par_results[[1,2]]
