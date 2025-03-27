@@ -202,7 +202,6 @@ nu_sq <- function(points, rec, RadB= 2.5*5/(2*pi) , n_cells=100){
   return(num/den)
 }
 
-
 #Program starts
 
 
@@ -213,7 +212,7 @@ nu_sq <- function(points, rec, RadB= 2.5*5/(2*pi) , n_cells=100){
 
 metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
                        apical_rad = 5/(2*pi), ratio_rad = 2.5, cyl_length = 20,
-                       gamma = 0.15, lambda = 0.04, beta = 100, s0_ratio=1){
+                       gamma = 0.15, lambda = 0.04, beta = 100, s0_ratio=1,par=FALSE){
   
   #We define our variables
   
@@ -272,6 +271,12 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
   #Start of the loop
   for (j in 1:n_steps) {
     print(paste0("Iteration ",j))
+    if (par == TRUE){
+      iter_start_time <- Sys.time()
+      elapsed_time <- difftime(Sys.time(), start_time, units="secs")  
+      log_msg <- sprintf("Simulation %d - Iteration %d - Time elapsed: %.2f sec  \n",seed,j, elapsed_time)
+      cat(log_msg, file=log_file, append=TRUE)}
+      
     for(k in 1:100) { #to go faster
       points2 <- move_points(points,wid = cyl_width_A,len = cyl_length,rc = r,n = n_cells)  
       energytesel2 <- tesellation_energy_N(points2$x, points2$y, A0 = Am,rec = rec , rad =rad,
