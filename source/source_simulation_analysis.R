@@ -158,7 +158,7 @@ stationarylewisBasal<-function(edgear,it,nsim=1){
       y = "Normalized Frequency"
     ) +
     scale_x_continuous(limits = c(3, 9), breaks = seq(3, 9, by = 1)) +  # Fine-tuned x-axis
-    scale_y_continuous(limits = c(0,0.6),labels = scales::percent_format(), expand = expansion(mult = c(0, 0.05))) +  # Y-axis as percentage
+    scale_y_continuous(limits = c(0,0.75),labels = scales::percent_format(), expand = expansion(mult = c(0, 0.05))) +  # Y-axis as percentage
     theme_minimal(base_size = 14) +
     theme(
       plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
@@ -287,7 +287,7 @@ stationarylewisApical<-function(edgear,it,nsim=1){
       y = "Normalized Frequency"
     ) + 
     scale_x_continuous(limits = c(3, 9), breaks = seq(3, 9, by = 1)) +  # Fine-tuned x-axis
-    scale_y_continuous(limits = c(0,0.6),labels = scales::percent_format(), expand = expansion(mult = c(0, 0.05))) +  # Y-axis as percentage
+    scale_y_continuous(limits = c(0,0.75),labels = scales::percent_format(), expand = expansion(mult = c(0, 0.05))) +  # Y-axis as percentage
     theme_minimal(base_size = 14) +
     theme(
       plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
@@ -456,7 +456,7 @@ scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy,ratio
     scale_color_viridis_c(
       option = "D",
       direction = -1,
-      limits = c(0, 35),
+      limits = c(0, 65),
       name = "Percentages"
     ) +
     scale_size_continuous(range = c(3, 9), guide = "none") + # Controlled size range
@@ -489,7 +489,6 @@ scutoids_analysis_oneiter<-function(pointsAx, pointsAy, pointsBx, pointsBy,ratio
       legend.position = "right"
     )
   show(scutoidsplot)
-  
   }
 
 scutoids_percr <-function(histpts, n = 100, it=150,ratio,ap_rad,cylen,plotShow=TRUE){
@@ -509,8 +508,8 @@ scutoids_percr <-function(histpts, n = 100, it=150,ratio,ap_rad,cylen,plotShow=T
   for (i in 1:(it+1)) {
     pointsAx<-filter(histpts, Iteration == i-1)$x
     pointsAy<-filter(histpts, Iteration == i-1)$y
-    pointsBx <- pointsAx*2.5
-    pointsBy <- pointsAy*2.5
+    pointsBx <- pointsAx*ratio
+    pointsBy <- pointsAy*ratio
     tslA<-deldir(pointsAx,pointsAy,rw=rect1)
     tilA<-tile.list(tslA)[(n+1):(2*n)]
     tslB<-deldir(pointsBx,pointsBy,rw=rect2)
@@ -745,7 +744,7 @@ scutoids_analysis_simulations <- function(results, Ratio = 2.5, n = 100, sim = 1
     scale_color_viridis_c(
       option = "D",
       direction = -1,
-      limits = c(0, 35),
+      limits = c(0, 65),
       name = "Percentages"
     ) +
     scale_size_continuous(range = c(3, 9), guide = "none") + # Controlled size range

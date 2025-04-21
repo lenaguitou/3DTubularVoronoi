@@ -16,8 +16,10 @@ save_tessellation_layers_oneit <- function(pts,
   ymin <- 0
   ymax <- cyl_length
   
-  rec <- list()
-  rad <- list()
+  #rec <- list()
+  #rad <- list()
+  rec <- vector(mode = "list", length = Layers)
+  rad <- numeric(Layers)
   
   for(k in 1:Layers){
     rad[[k]]<- RadiusA+(k-1)*(cyl_thickness/(Layers-1)) #the radius of the layer k
@@ -35,7 +37,7 @@ save_tessellation_layers_oneit <- function(pts,
                    vert7y = double(), vert8y = double(), vert9y = double(), 
                    vert10y = double(), vert11y = double(),iteration=integer())
   
-  for (j in 1:Layers) {
+    for (j in 1:Layers) {
     tes <- deldir(pts$x*(rad[[j]]/rad[[1]]),pts$y,rw=rec[[j]])
     tiles <- tile.list(tes)[(n+1):(2*n)]
     lon<-length(df$id_cell)
@@ -116,19 +118,17 @@ save_tessellation_layers <- function(pts_all,n = 100, RadiusA = 5/(2*pi), Ratio 
                                      cyl_length = 20,
                                      Layers = 10,it = 100){
   df_all <- list()
-  
   # for(i in 1:it){
   #   pts = filter(pts_all,Iteration==i)
   #   df_all[[i]] <- save_tessellation_layers_oneit(pts = pts,n=n,RadiusA = RadiusA, Ratio = Ratio,cyl_length=cyl_length,Layers=Layers,it=i)
   # }
   df_all[[1]] <- save_tessellation_layers_oneit(pts = filter(pts_all,Iteration==1),n=n,RadiusA = RadiusA, Ratio = Ratio,cyl_length=cyl_length,Layers=Layers,it=1)
   df_all[[2]] <- save_tessellation_layers_oneit(pts = filter(pts_all,Iteration==it),n=n,RadiusA = RadiusA, Ratio = Ratio,cyl_length=cyl_length,Layers=Layers,it=it)
-  df_all <- bind_rows(df_all) 
   
-  filename <- paste0("results/saved_tessellation.csv")
-  
+  df_all <- bind_rows(df_all)
+  filename <- "results/saved_tessellation.csv"
   print(paste0("Results saved successfully in path: ", filename))
-  write.table(df_all, file = filename, sep = ",", row.names = FALSE)
+  write.csv(df_all, file = filename, row.names = FALSE)
   
   return(df_all)
 }

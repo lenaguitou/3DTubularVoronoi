@@ -40,14 +40,26 @@ library(doParallel)
 #we do the function call from another function (and so we don't define global
 #parameters)
 #
-
-move_points<-function(pt,wid,len,rc,n){
-  ind<-sample(1:n,1)
-  ptinx<-pt$x[ind]+rnorm(1,mean=0,sd=rc)
-  ptiny<-pt$y[ind]+rnorm(1,mean=0,sd=rc)
+move_points <-function(pt,wid,len,rc,n,ind){ 
+  theta <- runif(1,0,2*pi)  # random angle
+  ptinx <- pt$x[ind] + rc*cos(theta)
+  ptiny <- pt$y[ind] + rc*sin(theta)
   while((ptinx<0 || ptinx>wid)||(ptiny<0 || ptiny>len)){
-    ptinx<-pt$x[ind]+rnorm(1,mean=0,sd=rc)
-    ptiny<-pt$y[ind]+rnorm(1,mean=0,sd=rc)
+    theta <- runif(1,0,2*pi)  # random angle
+    ptinx <- pt$x[ind] + rc*cos(theta)
+    ptiny <- pt$y[ind] + rc*sin(theta)}
+  pt$x[c(ind,ind+n,ind+2*n)]<-c(ptinx,ptinx+wid,ptinx+2*wid)
+  pt$y[c(ind,ind+n,ind+2*n)]<-ptiny
+  return(pt)
+}
+
+move_points_2 <-function(pt,wid,len,rc,n){
+  ind <- sample(1:n,1)
+  ptinx <- pt$x[ind]+rnorm(1,mean=0,sd=rc)
+  ptiny <- pt$y[ind]+rnorm(1,mean=0,sd=rc)
+  while((ptinx<0 || ptinx>wid)||(ptiny<0 || ptiny>len)){
+    ptinx <- pt$x[ind]+rnorm(1,mean=0,sd=rc)
+    ptiny <- pt$y[ind]+rnorm(1,mean=0,sd=rc)
   }
   pt$x[c(ind,ind+n,ind+2*n)]<-c(ptinx,ptinx+wid,ptinx+2*wid)
   pt$y[c(ind,ind+n,ind+2*n)]<-ptiny
@@ -202,8 +214,8 @@ nu_sq <- function(points, rec, RadB= 2.5*5/(2*pi) , n_cells=100){
   return(num/den)
 }
 
-#Program starts
 
+#Program starts
 
 #We define a function to run the algorithm, 
 #this way allows us to run simulations with different parameters at the same
@@ -228,8 +240,8 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
   ymin <- 0
   ymax <- cyl_length
   
-  r <- cyl_width_A/n_cells #radius to make the moves
-  Am <- (cyl_width_A*(cyl_length))/n_cells
+  r <- 1/10 #radius to make the moves dimensionless
+  Am <- ((RadiusB+apical_rad)*pi*cyl_length)/n_cells
   
   rec <- vector(mode = "list", length = n_layers)
   rad <- numeric(n_layers)
@@ -239,16 +251,17 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
   }
   
   #Start, first iteration
-  set.seed(seed)
   
+  set.seed(seed)
   x1 <- runif(n_cells,xmin,xmax)
   y1 <- runif(n_cells,ymin,ymax)
   x <- c(x1,x1+cyl_width_A,x1+2*cyl_width_A)
   y <- c(y1,y1,y1)
-  
+
   pointsinit <- data.frame(x=x,y=y)
+
   energyinit <- tesellation_energy_N(pointsinit$x, pointsinit$y, A0 = Am, rec = rec , rad =rad,
-                                     gamad = gamma, lamad = lambda, n = n_cells, Layer = n_layers, s0 = s0_ratio)
+                                    gamad = gamma, lamad = lambda, n = n_cells, Layer = n_layers, s0 = s0_ratio)
   energiesinit <- elastic_contractile_adhesion_energy(pointsinit$x, pointsinit$y, A0 = Am, rec , rad,
                                      gamad = gamma, lamad = lambda, n = n_cells, Layer = n_layers, s0_ratio = s0_ratio)
   points <- pointsinit
@@ -267,7 +280,8 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
   histpts[1:(3*n_cells),3] <- 0
   
   energytesel <- energyinit
-  
+
+
   #Start of the loop
   for (j in 1:n_steps) {
     print(paste0("Iteration ",j))
@@ -276,9 +290,10 @@ metropolisad<-function(seed = 666, n_steps = 250, n_cells = 100, n_layers=5,
       elapsed_time <- difftime(Sys.time(), start_time, units="secs")  
       log_msg <- sprintf("Simulation %d - Iteration %d - Time elapsed: %.2f sec  \n",seed,j, elapsed_time)
       cat(log_msg, file=log_file, append=TRUE)}
-      
-    for(k in 1:100) { #to go faster
-      points2 <- move_points(points,wid = cyl_width_A,len = cyl_length,rc = r,n = n_cells)  
+  
+    indexes = sample(1:n_cells) #pick a random cell 
+    for(k in indexes) {  
+      points2 <- move_points(points,wid = cyl_width_A,len = cyl_length,rc = r,n = n_cells,ind = k)  
       energytesel2 <- tesellation_energy_N(points2$x, points2$y, A0 = Am,rec = rec , rad =rad,
                                          gamad = gamma, lamad = lambda, n = n_cells, Layer = n_layers, s0 = s0_ratio)
       c <- choice_metropolis(energytesel2-energytesel,beta) 
