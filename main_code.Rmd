@@ -39,15 +39,15 @@ Parameters for single simulation. Edit the values.
 
 ```{r}
 params = list(
-  seed = 2, # randomness
-  n_steps = 100, # simulation steps
-  n_cells = 200, # number of cells
-  n_layers = 10, # numbers of layers (min 3)
+  seed = 1, # randomness
+  n_steps = 50, # simulation steps
+  n_cells = 90, # number of cells
+  n_layers = 8, # numbers of layers (min 3)
   apical_rad = 5/(2*pi), # apical radius
-  ratio_rad = 3, # ratio between apical and basal radius
+  ratio_rad = 1.8, # ratio between basal and apical radius
   cyl_length = 15, # cylinder length
-  gamma = 0.15, # contractility    0.15 (hexagonal) 0.04 (soft)
-  lambda = 0.04,  # adhesion  0.04 (heaxgonal) 0 (soft)
+  gamma = 0.2, # contractility  
+  lambda = 0.1,  # adhesion  
   #kappa = 1 cause adimentionality (elasticity)
   beta = 100, #constant involved in jumps because of perturbations
   s0_ratio = 1 # characteristic ratio between the actual radius and apical radius
@@ -79,7 +79,7 @@ hist_energy = result_alg$energy_evolution
 Load previous results. Edit *fileName*. ATTENTION: the dataframe *simulation* might be overwritten.
 
 ```{r}
-fileName <- "results/single/results_simulation_25_03_27.RData"
+fileName <- "/home/ada/lguitou/Downloads/3DTubularVoronoi-main/results/single/results_simulation_25_04_21.RData"
 
 # DO NOT MODIFY
 PATH_FUNCTIONS = "source/save_simulation_results.R"
@@ -154,24 +154,23 @@ scutoids_percr(hist_points,ratio=parameters$ratio_rad,ap_rad = parameters$apical
 
 ## Execution
 
-Execute multiple simulations at the same time using different seeds (random initial conditions). Choose the number of simulations *N_SIM* and edit the list of parameters.
+Execute multiple simulations at the same time using different seeds (random initial conditions). Choose the number of simulations *N_SIM* and edit the list of parameters. To follow the time progression, check the file **Simulations_Tracking.txt** in the folder "results/parallel".
 
 ```{r}
-N_SIM = 5 # number of simulations with different seeds
+N_SIM = 10 # number of simulations with different seeds
 parameters_list = list(
-  n_steps = 3, # simulation steps
-  n_cells = 10, # number of cells
-  n_layers = 5, # numbers of layers (min 3)
-  apical_rad = 4/(2*pi), # apical radius
-  ratio_rad = 3, # ratio between apical and basal radius 
+  n_steps = 80, # simulation steps
+  n_cells = 90, # number of cells
+  n_layers = 8, # numbers of layers (min 3)
+  apical_rad = 5/(2*pi), # apical radius
+  ratio_rad = 1.8, # ratio between basal and apical radius
   cyl_length = 15, # cylinder length
-  gamma = 0.15, #3  contractility
-  lambda = 0.04, # adhesion 
+  gamma = 0.2, # contractility  
+  lambda = 0.1,  # adhesion  
   #kappa = 1 cause adimentionality (elasticity)
   beta = 100, #constant involved in jumps because of perturbations
   s0_ratio = 1 # characteristic ratio between the actual radius and apical radius
   )
-
 #DO NOT MODIFY
 PATH_MODEL = "source/model_execution.R"
 source(PATH_MODEL)
@@ -179,7 +178,7 @@ N_CLUSTERS <- detectCores() - 1  # Leave one core free for other processes
 cl <- makeCluster(N_CLUSTERS) 
 registerDoParallel(cl)
 start_time <- Sys.time()
-log_file <- "results/parallel/simulation_log.txt"
+log_file <- "results/parallel/Simulations_Tracking.txt"
 writeLines("Parallel simulations - Tracking progress\n", log_file)
 par_results <- foreach(i= 1:N_SIM, .combine = rbind, .packages = "deldir") %dopar% {
   params = c(seed = i,parameters_list)
@@ -199,8 +198,8 @@ par_parameters <- par_results[[1,2]]
 Load pre-existing results. Edit the file name and the number *N_SIM* of simulations to import. ATTENTION: the dataframe *par_results* might be overwritten.
 
 ```{r}
-fileName <- "results/parallel/results_simulation_25_03_27_"
-N_SIM = 3
+fileName <- "results/parallel/results_simulation_25_04_18_"
+N_SIM = 10
 
 # DO NOT MODIFY
 PATH_FUNCTIONS = "source/save_simulation_results.R"
@@ -215,7 +214,8 @@ for(i in 1:N_SIM){
   algorithm_i <- simulation_i$algorithm
   # Build the array
   par_results <- rbind(par_results, list(results = results_i, parameters = parameters_i, algorithm = algorithm_i))}
-par_parameters <- par_results[[1,2]]
+par_parameters <- par_results[[2,2]]
+par_parameters$seed
 ```
 
 ## Tube visualization
@@ -223,14 +223,13 @@ par_parameters <- par_results[[1,2]]
 Save the tessellation of a selected simulation by editing *saveSimulation*. ATTENTION: "saved_tesselations.csv" will be overwritten. Please rename previous tessellations files. To visualize the tube, use the Mathematica notebook, that has to be in the main folder *3DTubularVoronoi/*.
 
 ```{r}
-saveSimulation <- 2
+saveSimulation <- 10
 
 # DO NOT MODIFY
 PATH_FUNCTIONS = "source/save_utils.R"
 source(PATH_FUNCTIONS)
 pts_info_par = save_tessellation_layers(par_results[[saveSimulation]]$points_evolution, n = par_parameters$n_cells, RadiusA =par_parameters$apical_rad, Ratio = par_parameters$ratio_rad,cyl_length =par_parameters$cyl_length, Layers = par_parameters$n_layers,it=par_parameters$n_steps)
 ```
-
 ## Data analysis - Parallel
 
 ### a/ Energy levels plots
@@ -251,7 +250,7 @@ enerhist_average <- energy_analisis_averages_par(par_results, it = par_parameter
 Number of edges and relative cell area in the apical and basal area. Edit *selectedIteration* to select the iteration. The first one is 0 and the last one is *par_parameters\$n_steps*.
 
 ```{r}
-selectedIteration =  par_parameters$n_steps
+selectedIteration = 1# par_parameters$n_steps
 
 # DO NOT MODIFY
 PATH_SIMANALYSIS = "source/source_simulation_analysis.R"
