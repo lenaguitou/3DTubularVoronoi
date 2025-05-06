@@ -79,7 +79,7 @@ hist_energy = result_alg$energy_evolution
 Load previous results. Edit *fileName*. ATTENTION: the dataframe *simulation* might be overwritten.
 
 ```{r}
-fileName <- "/home/ada/lguitou/Downloads/3DTubularVoronoi-main/results/single/results_simulation_25_04_24.RData"
+fileName <- "/home/ada/lguitou/Downloads/3DTubularVoronoi-main/results/single/results_simulation_25_04_25.RData"
 
 # DO NOT MODIFY
 PATH_FUNCTIONS = "source/save_simulation_results.R"
